@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     global_role VARCHAR(50) NOT NULL DEFAULT 'USER',
     is_email_verified BOOLEAN DEFAULT FALSE
+    
 
 
 )
