@@ -24,14 +24,25 @@ export async function runMigrations(){
     
 
         await pool.query(sql)
-        
 
-        console.log(`migration ${file}`)
 
 
     }
 
        
+console.log("migration ran");
+
 await pool.end()
 
 }
+
+runMigrations()
+.then(()=>{
+    console.log("all migrations ran")
+})
+
+.catch((error)=>{
+    console.log(error)
+    process.exit(1)
+})
+
