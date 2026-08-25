@@ -4,13 +4,16 @@ import { ApiError } from "../errors/ApiError"
 
 type asyncFn=(
     request:NextRequest
-  
 )=>Promise<NextResponse | void>
 
+
 export const asynchandler=(fn:asyncFn)=>async(request:NextRequest)=>{
+
     try {
         await fn(request);
+
     } catch (error) {
+        
        if(error instanceof ApiError){
         return NextResponse.json(
             {
