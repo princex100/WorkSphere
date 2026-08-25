@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "migrate": "tsx lib/db/migration_runner.ts",
+    "migrate": "tsx src/lib/db/migration_runner.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

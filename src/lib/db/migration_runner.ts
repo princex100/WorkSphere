@@ -16,7 +16,7 @@ async function runMigrations(){
 
         const migrationfolder=path.join(
             process.cwd(),
-            "lib/db/migrations"
+            "src/lib/db/migrations"
         )
         
         const files=fs.readdirSync(migrationfolder).sort();
@@ -68,7 +68,7 @@ runMigrations()
     process.exit(0);
 })
 .catch((error)=>{
-    console.error("Error running migrations",error)
+    console.error("Error running migrations",error);
     process.exit(1);
 })
 .finally(async()=>{
