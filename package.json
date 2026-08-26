@@ -10,16 +10,24 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
+    "crypt": "^0.0.2",
+    "crypto": "^1.0.1",
     "dotenv": "^17.4.2",
     "jsonwebtoken": "^9.0.3",
+    "mailgen": "^2.0.36",
     "next": "16.3.1",
+    "nodemailer": "^9.0.5",
     "pg": "^8.23.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.21.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",

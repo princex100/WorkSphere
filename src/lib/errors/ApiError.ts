@@ -13,8 +13,8 @@ export class ApiError extends Error{
 
         message:string,
         statusCode:number,
-        stack:string="",
-        errors?:ValidationError[]
+        errors:ValidationError[]=[],
+        stack?:string,
 
     ){
 
@@ -28,6 +28,7 @@ export class ApiError extends Error{
         }else{
             Error.captureStackTrace(this,this.constructor);
         }
+     
 
         this.errors=errors??[];
     }
