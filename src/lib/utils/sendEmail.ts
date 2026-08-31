@@ -1,10 +1,22 @@
 import Mailgen from "mailgen";
 import nodemailer from "nodemailer";
+import path from "path";
 
 const mailgenContent=(url:string,username:string)=>{
     
      const mailgenerator = new Mailgen({
-        theme: 'default',
+        theme: {
+            path:path.join(
+                process.cwd(),
+                "node_modules/mailgen/themes/default/index.html"
+            )
+            ,
+            plaintextPath:path.join(
+                process.cwd(),
+                "node_modules/mailgen/themes/default/index.txt"
+            )
+
+        },
         product: {
             name: 'TaskMaster',
             link: 'https://www.google.com',

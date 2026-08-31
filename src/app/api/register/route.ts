@@ -3,6 +3,7 @@ import { asynchandler } from "@/lib/utils/asynchandler"
 import { registerValidator } from "@/lib/validators/auth.validators";
 import { ApiError } from "@/lib/errors/ApiError";
 import { registerUser } from "@/lib/services/auth.service";
+import { ApiResponse } from "@/lib/responses/ApiResponse";
 
 export const POST=asynchandler(async(request:NextRequest)=>{
 
@@ -12,16 +13,11 @@ export const POST=asynchandler(async(request:NextRequest)=>{
 
     if(user.success){
         return NextResponse.json(
-            {
-                success:true,
-                message:user.message,
-                user:user.user
-                
-            },{
-                status:201
-            }
+           new ApiResponse(201,user.message,user.user)
         )
     }
+   
+
 
 
 })

@@ -8,7 +8,7 @@ import bcrypt from "bcrypt"
  type Data={
         name:string,
         email:string,
-        password_hash:string,
+        password:string,
         mobile:string,
         country_code:string,
         
