@@ -2,8 +2,10 @@
  import { ApiError } from "../../lib/errors/ApiError";
  import crypto from 'crypto'
  import { sendEmail } from "../utils/sendEmail";
- import { createUserInDB, saveHashedToken } from "../repositories/user.repository";
+ import { createUserInDB, saveHashedToken, findEmailToken, findUserbyId,updateUserInDB ,deletePreviousTokens} from "../repositories/user.repository";
 import bcrypt from "bcrypt"
+ 
+
  
  type Data={
         name:string,
@@ -55,7 +57,7 @@ const hashed_password=await bcrypt.hash(result.data?.password,10);
                           .update(unhashedToken)
                           .digest("hex");
 
-
+       await deletePreviousTokens(createdUser.id)
        const hashedTokenSaved=await saveHashedToken(hashedToken,createdUser.id);
 
       
@@ -71,6 +73,7 @@ const hashed_password=await bcrypt.hash(result.data?.password,10);
 
 
       const isEmailSent=await sendEmail(unhashedToken,createdUser.email);
+
 
       if(!isEmailSent){
           throw new ApiError("verification email could not be sent.",500,[{field:'email',message:'verification email could not be sent'}]
@@ -89,3 +92,51 @@ const hashed_password=await bcrypt.hash(result.data?.password,10);
 
 
 }
+
+
+
+export const verifyEmail=async(token:string)=>{
+
+    if(!token){
+        throw new ApiError("Token is required",400,[
+            { field:"token", message:"token is required" }
+        ]);
+    }
+     
+    const tokenHash=crypto
+                          .createHash("sha256")
+                          .update(token)
+                          .digest("hex");
+                          
+    const tokenEntry= await findEmailToken(tokenHash);
+
+    if(!tokenEntry){
+        throw new ApiError("email verification token expired",400,[{ field:"token", message:"token is expired or invalid" }])
+
+    }
+   
+    const user=await findUserbyId(tokenEntry.user_id);
+
+    if(!user){
+        throw new ApiError("user not found",500,[{ field:"user", message:"user not found" }])
+    }
+
+    user.is_email_verified=true;
+    
+
+    const updatedUser=await updateUserInDB(user.id,user);
+    
+
+    if(!updatedUser){
+        throw new ApiError("user not updated",500,[{ field:"user", message:"user not updated" }])
+    }
+
+    return {
+        success:true,
+        message:"User email verified successfully.",
+        user:updatedUser
+    }
+    
+
+}
+

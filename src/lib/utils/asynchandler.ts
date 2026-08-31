@@ -10,7 +10,7 @@ type asyncFn=(
 export const asynchandler=(fn:asyncFn)=>async(request:NextRequest)=>{
 
     try {
-       return  await fn(request);
+       return await fn(request);
 
     } catch (error) {
         

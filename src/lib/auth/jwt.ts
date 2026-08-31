@@ -3,8 +3,10 @@
 // import { ApiError } from "../errors/ApiError";
 
 
+
 // const generateAccessToken=(userId:string,user:User)=>{
-//     jwt.sign(
+
+//    return jwt.sign(
 //         {
 //             id:userId,
 //             username:user.name,

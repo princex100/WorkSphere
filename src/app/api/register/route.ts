@@ -9,6 +9,12 @@ export const POST=asynchandler(async(request:NextRequest)=>{
 
     const req=await request.json();
 
+    if(!req){
+        throw new ApiError("Bad Request",400,[
+            {field:"body",message:"request body is required"}
+        ]);
+    }
+
     const user=await registerUser(req);
 
     if(user.success){

@@ -22,7 +22,6 @@ export const createUserInDB=async(userdata:userDataType)=>{
         country_code,
         global_role,
         is_email_verified
-
         ) values
          ($1,$2,$3,$4,$5,$6,$7)
 
@@ -46,7 +45,7 @@ export const createUserInDB=async(userdata:userDataType)=>{
         ]
     )
 
-    return result.rows[0];
+    return result.rows[0] ?? null;
 
 
 
@@ -71,7 +70,71 @@ export const saveHashedToken=async(token:string,user_id:string)=>{
 
         [token,user_id,new Date(Date.now()+15*60*1000)]
     )
-    return result.rows[0];
+    return result.rows[0] ?? null;
 }
+
+export const findUserbyId=async(id:string)=>{
+    const result=await pool.query(
+        `SELECT 
+        id,
+        name,
+        email,
+        mobile,
+        country_code,
+        global_role,
+        is_email_verified,
+        created_at,
+        updated_at
+        FROM users WHERE id=$1
+        `,
+        [id]
+    )
+    
+    return result.rows[0] ?? null;
+}
+
+export const findEmailToken=async(token:string)=>{
+    const result=await pool.query(
+        `SELECT * FROM email_verification_tokens WHERE token=$1 AND expires_at > CURRENT_TIMESTAMP`,
+        [token]
+    )
+    return result.rows[0] ?? null;
+}
+
+
+export const updateUserInDB=async(userId:string,user:userDataType)=>{
+    const result=await pool.query(
+        `UPDATE users SET 
+        is_email_verified=$1,
+        updated_at=CURRENT_TIMESTAMP
+        WHERE id=$2
+
+        RETURNING 
+        id,
+        name,
+        email,
+        mobile,
+        country_code,
+        global_role,
+        is_email_verified,
+        created_at,
+        updated_at`,
+        [
+           true,
+            userId
+        ]
+    )
+    return result.rows[0] ?? null;
+}
+
+export const deletePreviousTokens=async(userid:string)=>{
+      await pool.query(
+        ` DELETE FROM email_verification_tokens 
+        WHERE user_id=$1`,[userid]
+    )
+
+    return {success:true,message:"previous tokens deleted successfully."}
+}
+
 
 
