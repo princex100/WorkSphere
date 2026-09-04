@@ -10,10 +10,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
+    "axios": "^1.20.0",
     "bcrypt": "^6.0.0",
     "crypt": "^0.0.2",
     "crypto": "^1.0.1",
     "dotenv": "^17.4.2",
+    "google-auth-library": "^10.9.1",
     "jsonwebtoken": "^9.0.3",
     "mailgen": "^2.0.36",
     "next": "16.3.1",

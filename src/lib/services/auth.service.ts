@@ -4,6 +4,8 @@
  import { sendEmail } from "../utils/sendEmail";
  import { createUserInDB, saveHashedToken, findEmailToken, findUserbyId,updateUserInDB ,deletePreviousTokens} from "../repositories/user.repository";
 import bcrypt from "bcrypt"
+import { generateJwtTokens } from "../auth/jwt";
+import { saveRefreshTokenInDB ,findUserByEmail} from "../repositories/user.repository";
  
 
  
@@ -33,6 +35,7 @@ const hashed_password=await bcrypt.hash(result.data?.password,10);
             name:result.data.name ,
             email:result.data.email ,
             password_hash:hashed_password,
+            avatar_url:"",
             mobile:result.data.mobile ,
             country_code:result.data.country_code ,
             global_role:'USER',
@@ -139,4 +142,97 @@ export const verifyEmail=async(token:string)=>{
     
 
 }
+
+
+import axios from "axios";
+
+export const googleOauth=async(token:string)=>{
+
+  
+    const response=await axios.get(process.env.GOOGLE_USERINFO_URL as string,{
+         headers:{
+             Authorization:`Bearer ${token}`
+         }
+     })
+
+ 
+     if(!response){
+         throw new ApiError("token is invalid",400,[
+             {field:"token",message:"token is invalid"}
+         ])
+     }
+ 
+     const userInfo=response.data;
+     console.log(userInfo);
+
+     const isUserinDB=await findUserByEmail(userInfo.email);
+
+    if(isUserinDB){
+         const {refreshToken,accessToken} = await generateJwtTokens(isUserinDB.id);
+
+    const tokensaved=await saveRefreshTokenInDB(
+        refreshToken,
+        isUserinDB.id
+    )
+
+    if(!tokensaved){
+        throw new ApiError("token could not be saved",500,[{ field:"token", message:"token could not be saved" }])
+    }
+
+
+    return {
+        success:true,
+      message:"Google oauth successful",
+      user:userInfo,
+      accessToken,
+      refreshToken
+     }
+
+
+    }
+
+    const user={   
+        
+        name:userInfo.name,
+        email:userInfo.email,
+        password_hash:"",
+        avatar_url:userInfo.picture,
+        mobile:"",
+        country_code:"",
+        global_role:'USER',
+        is_email_verified:true
+
+    }
+
+    const createdUser=await createUserInDB(user);
+
+    if(!createdUser){
+        throw new ApiError("user could not be created",500,[{ field:"user", message:"user could not be created" }])
+    }
+
+    const {refreshToken,accessToken} = await generateJwtTokens(createdUser.id);
+
+    const tokensaved=await saveRefreshTokenInDB(
+        refreshToken,
+        createdUser.id
+    )
+
+    if(!tokensaved){
+        throw new ApiError("token could not be saved",500,[{ field:"token", message:"token could not be saved" }])
+    }
+
+
+    return {
+        success:true,
+      message:"Google oauth successful",
+      user:userInfo,
+      accessToken,
+      refreshToken
+     }
+
+
+
+}
+
+
 

@@ -5,6 +5,8 @@ type userDataType={
     name:string,
     email:string,
     password_hash:string,
+    avatar_url:string,
+
     mobile:string,
     country_code:string,
     global_role:string,
@@ -18,6 +20,7 @@ export const createUserInDB=async(userdata:userDataType)=>{
         name,
         email,
         password_hash,
+        avatar_url,
         mobile,
         country_code,
         global_role,
@@ -28,6 +31,7 @@ export const createUserInDB=async(userdata:userDataType)=>{
          RETURNING id,
         name,
         email,
+        avatar_url,
         mobile,
         country_code,
         global_role,
@@ -38,6 +42,7 @@ export const createUserInDB=async(userdata:userDataType)=>{
             userdata.name,
             userdata.email,
             userdata.password_hash,
+            userdata.avatar_url || "",
             userdata.mobile,
             userdata.country_code,
             userdata.global_role,
@@ -134,6 +139,38 @@ export const deletePreviousTokens=async(userid:string)=>{
     )
 
     return {success:true,message:"previous tokens deleted successfully."}
+}
+
+export const saveRefreshTokenInDB=async(token:string,user_id:string)=>{
+    const result=await pool.query(
+        `INSERT INTO refresh_tokens(
+            token,
+            user_id,
+            expires_at
+        )
+        VALUES(
+            $1,
+            $2,
+            $3
+        ) 
+       
+        RETURNING id,
+        token,
+        user_id,
+        expires_at`,
+
+        [token,user_id,new Date(Date.now()+7*24*60*60*1000)]
+    )
+    return result.rows[0] ?? null;
+}
+
+export const findUserByEmail=async(email:string)=>{
+
+    const result=await pool.query(
+        `SELECT * FROM users WHERE email=$1`,
+        [email]
+    )
+    return result.rows[0] ?? null;
 }
 
 
