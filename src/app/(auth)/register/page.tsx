@@ -7,7 +7,7 @@ export default function Register() {
 
     const handleoauth=useGoogleLogin({
         onSuccess:async(tokenResponse)=>{
-           const response= await axios.post("/api/googleOauth",{
+           const response= await axios.post("/api/google-oauth",{
             access_token:tokenResponse.access_token
            });
 
