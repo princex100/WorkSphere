@@ -2,15 +2,15 @@ import { ApiError } from "@/lib/errors/ApiError";
 import { NextRequest,NextResponse } from "next/server";
 import jwt from "jsonwebtoken"
 import { jwtVerify } from "jose";
-import { findUserbyId } from "@/lib/repositories/user.repository";
 
 export const jwtverify=async(request:NextRequest)=>{
 
-   const access_token=request.cookies.get("accessToken")
+   const access_token=request.cookies.get("accessToken")?.value || request.headers.get("Authorization")?.split(" ")[1];
 
    if(!access_token){
       throw new ApiError("Unauthorized",401,[{ field:"token", message:"token is required" }])
    }
+
 
     type JwtPayload={
     id:string,
@@ -20,7 +20,7 @@ export const jwtverify=async(request:NextRequest)=>{
    }
 
    const secret=new TextEncoder().encode(process.env.ACCESS_TOKEN_SECRET)
-   const {payload}=await jwtVerify<JwtPayload>(access_token.value,secret) 
+   const {payload}=await jwtVerify<JwtPayload>(access_token,secret) 
 
    if(!payload){
     throw new ApiError("Unauthorized",401,[{ field:"token", message:"token is expired or invalid" }])
@@ -28,16 +28,16 @@ export const jwtverify=async(request:NextRequest)=>{
 
   
 
- const requestheaders=new Headers(request.headers);
+ const requestheadersjwt=new Headers(request.headers);
 
-  requestheaders.set("user",payload.id);
-  requestheaders.set("role",payload.role)
+  requestheadersjwt.set("user",payload.id);
+  requestheadersjwt.set("role",payload.role)
 
 
   return {
     success:true,
     message:"token is valid",
-    requestheaders
+    requestheadersjwt
   };
 
 }
