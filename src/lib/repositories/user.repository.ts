@@ -26,7 +26,7 @@ export const createUserInDB=async(userdata:userDataType)=>{
         global_role,
         is_email_verified
         ) values
-         ($1,$2,$3,$4,$5,$6,$7)
+         ($1,$2,$3,$4,$5,$6,$7,$8)
 
          RETURNING id,
         name,

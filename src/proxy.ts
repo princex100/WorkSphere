@@ -1,13 +1,32 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { ApiError } from './lib/errors/ApiError'
-import { jwtverify } from './middlewares/Jwt.middleware'
+import { jwtverify } from './middlewares/Jwt.proxy'
  
 // This function can be marked `async` if using `await` inside
 export async function proxy(request: NextRequest) {
+
+    
+    const requestheaders=new Headers();
+    const forwardHeaders=new Headers(request.headers);
+
+   const allowedOrigins = ["http://localhost:3000"];
+    requestheaders.set("Access-Control-Allow-Methods","GET,POST,PUT,DELETE,OPTIONS");
+    requestheaders.set("Access-Control-Allow-Headers","Content-Type,Authorization");
+    requestheaders.set("Access-Control-Max-Age","86400");
+    
+    forwardHeaders.set("Access-Control-Allow-Methods","GET,POST,PUT,DELETE,OPTIONS");
+    forwardHeaders.set("Access-Control-Allow-Headers","Content-Type,Authorization");
+    forwardHeaders.set("Access-Control-Max-Age","86400");
+     const origin = request.headers.get("origin");
+
+        if(origin && allowedOrigins.includes(origin)){
+            requestheaders.set("Access-Control-Allow-Origin",origin);
+            forwardHeaders.set("Access-Control-Allow-Origin",origin);
+        }
     try {
 
-        const allowedOrigins = ["http://localhost:3000"];
+       
 
         const publicpages = [
             "/",
@@ -18,6 +37,7 @@ export async function proxy(request: NextRequest) {
         ];
         
         const apipublicpaths = [
+            "/api/users/current-user",
             "/api/register",
             "/api/login",
             "/api/verify-email",
@@ -46,26 +66,18 @@ export async function proxy(request: NextRequest) {
         return response;
     }
 
-    const response=NextResponse.next()
-
-    const requestheaders=new Headers(request.headers);
-
-    requestheaders.set("Access-Control-Allow-Origin","*");
-    requestheaders.set("Access-Control-Allow-Methods","GET,POST,PUT,DELETE,OPTIONS");
-    requestheaders.set("Access-Control-Allow-Headers","Content-Type,Authorization");
-    requestheaders.set("Access-Control-Max-Age","86400");
-    
-     const origin = request.headers.get("origin");
-
-        if(origin && allowedOrigins.includes(origin)){
-            response.headers.set("Access-Control-Allow-Origin",origin);
+    const response=NextResponse.next({
+        request:{
+            headers:forwardHeaders
         }
+    })
 
+    
 
     //---------------------------------------------------------------------------///////////////////
 
 
-   const token = request.cookies.get("accessToken")?.value || request.cookies.get("token")?.value;
+   const token = request.cookies.get("accessToken")?.value || request.cookies.get("token")?.value || request.headers.get("Authorization")?.split(" ")[1];
 
    const pathname=request.nextUrl.pathname
 
@@ -86,11 +98,19 @@ export async function proxy(request: NextRequest) {
      }
 
      //setting headers
-     return NextResponse.next({
+      const nextResponse=NextResponse.next({
         request:{
             headers:isjwtvalid.requestheadersjwt
         }
      })
+
+
+     requestheaders.forEach((val,key)=>{
+        nextResponse.headers.set(key,val)
+     })
+   
+     return nextResponse;
+     
 
 
    }
@@ -120,8 +140,11 @@ export async function proxy(request: NextRequest) {
             return NextResponse.json({
                 success:false,
                 message:error.message,
-                errors:error.errors
-            },{status:error.statusCode})
+                errors:error.errors,
+    
+            },{status:error.statusCode,
+                headers:requestheaders
+            })
         }
 
         return NextResponse.json({
@@ -130,9 +153,12 @@ export async function proxy(request: NextRequest) {
             errors:[
                 { field:"error",message:"Internal server error" }
             ]
-        },{status:500})
+        },{status:500,
+            headers:requestheaders
+        })
         
     }
+    
 
 
 }
@@ -152,6 +178,6 @@ export const config = {
     "/workspaces/:path*",
     "/profile/:path*",
     "/settings/:path*",
-    "/logout"
+    "/logout",
   ]
 }

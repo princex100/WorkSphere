@@ -78,7 +78,7 @@ const hashed_password=await bcrypt.hash(result.data?.password,10);
       const isEmailSent=await sendEmail(unhashedToken,createdUser.email);
 
 
-      if(!isEmailSent){
+      if(!isEmailSent.success){
           throw new ApiError("verification email could not be sent.",500,[{field:'email',message:'verification email could not be sent'}]
           );
       }
@@ -233,6 +233,24 @@ export const googleOauth=async(token:string)=>{
 
 
 }
+type loginRequestType={
+    credential:string | undefined,
+    password:string
+}
 
+export const loginUser=async(data:loginRequestType)=>{
+
+   const {credential,password}=data;
+
+    
+   if(!credential){
+     throw new ApiError("username or email is required",400,[{field:"username",message:"username is required"},{field:"email",message:"email is required"}])
+   }
+
+   const isUser=await findus
+
+
+
+}
 
 
