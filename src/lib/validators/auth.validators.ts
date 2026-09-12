@@ -8,6 +8,14 @@ const validSchema = z.object({
                 /^[A-Za-z ]+$/,
                 "Name can contain only letters and spaces"
             ),
+        username: z.string()
+            .min(3, "Username must be at least 3 characters")
+            .max(50, "Username too long")
+            .regex(
+                /^[a-zA-Z0-9_]+$/,
+                "Username can only contain letters, numbers, and underscores"
+            )
+            .optional(),
         email: z.string()
             .email({ message: "invalid email address." })
             .toLowerCase()
@@ -48,7 +56,7 @@ export const registerValidator = (data: unknown) => {
     }
 
 
-    const {name,email,password,country_code,mobile}=result.data;
+    const {name,username,email,password,country_code,mobile}=result.data;
 
     
 
@@ -56,6 +64,7 @@ export const registerValidator = (data: unknown) => {
         success:true as const,
         data:{
             name,
+            username,
             email,
             password,
             country_code,

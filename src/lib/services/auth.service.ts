@@ -1,22 +1,22 @@
  import { registerValidator } from "../validators/auth.validators";
- import { ApiError } from "../../lib/errors/ApiError";
- import crypto from 'crypto'
- import { sendEmail } from "../utils/sendEmail";
- import { createUserInDB, saveHashedToken, findEmailToken, findUserbyId,updateUserInDB ,deletePreviousTokens} from "../repositories/user.repository";
+import { ApiError } from "../../lib/errors/ApiError";
+import crypto from 'crypto'
+import { sendEmail } from "../utils/sendEmail";
+import { createUserInDB, saveHashedToken, findEmailToken, findUserbyId, updateUserInDB, deletePreviousTokens, findUserByUsername, findUserByUsernameOrEmail } from "../repositories/user.repository";
 import bcrypt from "bcrypt"
 import { generateJwtTokens } from "../auth/jwt";
-import { saveRefreshTokenInDB ,findUserByEmail} from "../repositories/user.repository";
+import { saveRefreshTokenInDB, findUserByEmail } from "../repositories/user.repository";
  
 
  
- type Data={
-        name:string,
-        email:string,
-        password:string,
-        mobile:string,
-        country_code:string,
-        
-    }
+type Data={
+    name:string,
+    username?:string,
+    email:string,
+    password:string,
+    mobile:string,
+    country_code:string,
+}
   
 export const registerUser=async(data:Data)=>{
   
@@ -27,17 +27,30 @@ export const registerUser=async(data:Data)=>{
             throw new ApiError("registration failed",400,result.errors);
         }
 
+        const existingEmail=await findUserByEmail(result.data.email);
+        if(existingEmail){
+            throw new ApiError("Email already exists",400,[{ field:"email", message:"Email is already registered" }]);
+        }
+
+        if(result.data.username){
+            const existingUsername=await findUserByUsername(result.data.username);
+            if(existingUsername){
+                throw new ApiError("Username already taken",400,[{ field:"username", message:"Username is already taken" }]);
+            }
+        }
+
 
 const hashed_password=await bcrypt.hash(result.data?.password,10);
 
        
     let response={
-            name:result.data.name ,
-            email:result.data.email ,
+            name:result.data.name,
+            username:result.data.username,
+            email:result.data.email,
             password_hash:hashed_password,
             avatar_url:"",
-            mobile:result.data.mobile ,
-            country_code:result.data.country_code ,
+            mobile:result.data.mobile,
+            country_code:result.data.country_code,
             global_role:'USER',
             is_email_verified:false
         }
@@ -244,12 +257,46 @@ export const loginUser=async(data:loginRequestType)=>{
 
     
    if(!credential){
-     throw new ApiError("username or email is required",400,[{field:"username",message:"username is required"},{field:"email",message:"email is required"}])
+     throw new ApiError("username or email is required",400,[{field:"credential",message:"username or email is required"}])
    }
 
-   const isUser=await findus
+   if(!password){
+     throw new ApiError("password is required",400,[{field:"password",message:"password is required"}])
+   }
 
+   const user=await findUserByUsernameOrEmail(credential);
 
+   if(!user){
+     throw new ApiError("Invalid credentials",401,[{field:"credential",message:"Invalid username/email or password"}])
+   }
+
+   const isPasswordValid=await bcrypt.compare(password,user.password_hash);
+
+   if(!isPasswordValid){
+     throw new ApiError("Invalid credentials",401,[{field:"password",message:"Invalid username/email or password"}])
+   }
+
+   const {accessToken,refreshToken}=await generateJwtTokens(user.id);
+
+   await saveRefreshTokenInDB(refreshToken,user.id);
+
+   return {
+     success:true,
+     message:"User logged in successfully",
+     user:{
+        id:user.id,
+        name:user.name,
+        username:user.username,
+        email:user.email,
+        mobile:user.mobile,
+        country_code:user.country_code,
+        global_role:user.global_role,
+        is_email_verified:user.is_email_verified,
+        avatar_url:user.avatar_url
+     },
+     accessToken,
+     refreshToken
+   }
 
 }
 

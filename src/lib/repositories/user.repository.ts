@@ -3,6 +3,7 @@ import pool from "../db"
 
 type userDataType={
     name:string,
+    username?:string,
     email:string,
     password_hash:string,
     avatar_url:string,
@@ -18,6 +19,7 @@ export const createUserInDB=async(userdata:userDataType)=>{
 
         `INSERT INTO users(
         name,
+        username,
         email,
         password_hash,
         avatar_url,
@@ -26,10 +28,11 @@ export const createUserInDB=async(userdata:userDataType)=>{
         global_role,
         is_email_verified
         ) values
-         ($1,$2,$3,$4,$5,$6,$7,$8)
+         ($1,$2,$3,$4,$5,$6,$7,$8,$9)
 
          RETURNING id,
         name,
+        username,
         email,
         avatar_url,
         mobile,
@@ -40,6 +43,7 @@ export const createUserInDB=async(userdata:userDataType)=>{
         updated_at`,
         [
             userdata.name,
+            userdata.username || null,
             userdata.email,
             userdata.password_hash,
             userdata.avatar_url || "",
@@ -83,6 +87,7 @@ export const findUserbyId=async(id:string)=>{
         `SELECT 
         id,
         name,
+        username,
         email,
         mobile,
         country_code,
@@ -117,6 +122,7 @@ export const updateUserInDB=async(userId:string,user:userDataType)=>{
         RETURNING 
         id,
         name,
+        username,
         email,
         mobile,
         country_code,
@@ -172,6 +178,25 @@ export const findUserByEmail=async(email:string)=>{
     )
     return result.rows[0] ?? null;
 }
+
+export const findUserByUsername=async(username:string)=>{
+
+    const result=await pool.query(
+        `SELECT * FROM users WHERE name=$1`,
+        [username]
+    )
+    return result.rows[0] ?? null;
+}
+
+export const findUserByUsernameOrEmail=async(credential:string)=>{
+
+    const result=await pool.query(
+        `SELECT * FROM users WHERE email=$1 OR name=$1`,
+        [credential]
+    )
+    return result.rows[0] ?? null;
+}
+
 
 
 

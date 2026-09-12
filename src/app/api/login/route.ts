@@ -22,16 +22,29 @@ export const POST=asynchandler(async(request:NextRequest)=>{
         throw new ApiError("Invalid request",400,[{field:"data",message:"invalid data"}])
     }
 
-    const isUserLoggedIn=await loginUser(data);
-    
+    const User=await loginUser(data);
 
+    const options1={
+        httpOnly:true,
+        secure:true,
+        sameSite:"strict" as const,
+        maxAge:5*60
+    }
+    const options2={
+        httpOnly:true,
+        secure:true,
+        sameSite:"strict" as const,
+        maxAge:10*24*60*60
+    }
 
-    
+    const response = NextResponse.json(
+        new ApiResponse(200, User, "User logged in successfully")
+    );
 
+    response.cookies.set("accessToken", User.accessToken, options1);
+    response.cookies.set("refreshToken", User.refreshToken, options2);
 
-    return NextResponse.json(
-        new ApiResponse(200,{},"User logged in successfully")
-    )
+    return response;
 
 
 })

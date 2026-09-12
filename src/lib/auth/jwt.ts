@@ -19,7 +19,7 @@ const generateAccessToken=(userId:string,user:User)=>{
    return jwt.sign(
         {
             id:userId,
-            username:user.name,
+            username:user.username || user.name,
             email:user.email,
             role:user.global_role
         },
@@ -46,7 +46,7 @@ export const generateRefreshToken=(userId:string,user:User)=>{
     return jwt.sign(
         {
             id:userId,
-            username:user.name,
+            username:user.username || user.name,
             email:user.email,
             role:user.global_role
         },
