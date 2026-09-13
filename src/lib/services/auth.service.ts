@@ -17,6 +17,9 @@ import {
 } from "../repositories/user.repository";
 import bcrypt from "bcrypt"
 import { generateJwtTokens } from "../auth/jwt";
+
+import { loginValidator } from "../validators/auth.validators";
+import { savepasswordResetToken } from "../repositories/user.repository";
  
 
  
@@ -98,8 +101,9 @@ const hashed_password=await bcrypt.hash(result.data?.password,10);
        
 
 
-
-      const isEmailSent=await sendEmail(unhashedToken,createdUser.email);
+     const url=`http://localhost:3000/auth/verify-email?token=${unhashedToken}`;
+     
+      const isEmailSent=await sendEmail(url,createdUser.email,sendEmailENUM.REGISTER);
 
 
       if(!isEmailSent.success){
@@ -265,7 +269,7 @@ type loginRequestType={
 export const loginUser=async(data:loginRequestType)=>{
 
    const {credential,password}=data;
-
+  
     
    if(!credential){
      throw new ApiError("username or email is required",400,[{field:"credential",message:"username or email is required"}])
@@ -275,7 +279,13 @@ export const loginUser=async(data:loginRequestType)=>{
      throw new ApiError("password is required",400,[{field:"password",message:"password is required"}])
    }
 
-   const user=await findUserByUsernameOrEmail(credential);
+   const validatedData=loginValidator({credential,password});
+
+   if(!validatedData.success){
+     throw new ApiError("Invalid credentials",400,validatedData.errors)
+   }
+
+   const user=await findUserByUsernameOrEmail(validatedData.data.credential);
 
    if(!user){
      throw new ApiError("Invalid credentials",401,[{field:"credential",message:"Invalid username/email or password"}])
@@ -323,6 +333,75 @@ export const logout=async(userId:string)=>{
         message:"User logged out successfully",
         
     }
+}
+
+import { sendEmailENUM } from "@/constants";
+import { emailValidator } from "../validators/auth.validators";
+export const password_reset=async(email:string)=>{
+
+     const validatedData=emailValidator(email)
+
+     if(!validatedData.success){
+        throw new ApiError("Invalid email",400,validatedData.errors)
+     }
+
+    const user=await findUserByEmail(validatedData.data.email)
+
+    if(!user){
+        throw new ApiError("User not found",404,[{ field:"email", message:"user not found" }])
+    }
+
+     const unhashedToken=crypto.randomBytes(20).toString("hex");
+
+        const hashedToken=crypto
+                          .createHash("sha256")
+                          .update(unhashedToken)
+                          .digest("hex");
+
+        
+        const passwordResetTokenSaved=await savepasswordResetToken(hashedToken,user.id)
+
+        if(!passwordResetTokenSaved){
+            throw new ApiError("Failed to save password reset token.",500,[{
+                field:'user' ,
+                message:'user could not be created'
+            }]);
+        }
+
+        const url=`http://localhost:3000/auth/reset-password?token=${unhashedToken}`;
+        const emailsent=await sendEmail(url,user.email,sendEmailENUM.FORGOT_PASSWORD);
+
+        if(!emailsent.success){
+            throw new ApiError("Failed to send password reset email.",500,[{
+                field:'email' ,
+                message:'failed to send password reset email'
+            }])
+        }
+
+        return {
+            success:true,
+            message:"Password reset email sent successfully.",
+            user:{
+                id:user.id,
+                name:user.name,
+                username:user.username,
+                email:user.email,
+                mobile:user.mobile,
+                country_code:user.country_code,
+                global_role:user.global_role,
+                is_email_verified:user.is_email_verified,
+                avatar_url:user.avatar_url
+             },
+            
+        }
+
+       
+      
+     
+
+    
+
+    
 }
 
 

@@ -1,10 +1,10 @@
 import Mailgen from "mailgen";
 import nodemailer from "nodemailer";
 import path from "path";
+import { sendEmailENUM } from "@/constants";
+import { ApiError } from "../errors/ApiError";
 
-const mailgenContent=(url:string,username:string)=>{
-    
-     const mailgenerator = new Mailgen({
+ const mailgenerator = new Mailgen({
         theme: {
             path:path.join(
                 process.cwd(),
@@ -23,6 +23,10 @@ const mailgenContent=(url:string,username:string)=>{
             
         }
     })
+
+const RegisterMailgenContent=(url:string,username:string)=>{
+    
+    
 
     const content={
     body: {
@@ -55,14 +59,60 @@ const mailgenContent=(url:string,username:string)=>{
 
 }
 
-export const sendEmail=async(token:string,email:string)=>{
+const forgotPasswordMailContent=(url:string,username:string)=>{
+    
+
+
+    const content={
+      body: {
+     name: username,
+
+    intro: "We received a request to reset your WorkSphere account password.",
+
+    action: {
+      instructions:
+        "Click the button below to create a new password. This link will expire in 15 minutes.",
+      button: {
+        color: "#3869D4",
+        text: "Reset Password",
+        link: url,
+      },
+    },
+
+    outro:
+      "If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.",
+  },
+}
+    const textcontent=mailgenerator.generatePlaintext(content);
+    const htmlcontent=mailgenerator.generate(content);
+
+    return {textcontent,htmlcontent} ;
+
+}
+
+export const sendEmail=async(url:string,email:string,emailType:string)=>{
     
    
-
-  const url=`http://localhost:3000/auth/verify-email?token=${token}`;
-  console.log("the url is",url);
+  let mailgenContent;
+  let subject;
   
-  const {textcontent,htmlcontent}=mailgenContent(url,email);
+
+  if(emailType===sendEmailENUM.REGISTER){
+     mailgenContent=RegisterMailgenContent(url,email);
+     subject="Verify Your Email"
+    
+  }
+  else if(emailType===sendEmailENUM.FORGOT_PASSWORD){
+     mailgenContent=forgotPasswordMailContent(url,email);
+     subject="Reset Your Password"
+  }
+  else{
+     throw new ApiError("Invalid email type",400,[
+        {field:"emailType",message:"invalid email type"}
+     ])
+  }
+   
+   const {textcontent,htmlcontent}=mailgenContent;
    
   const transporter=  nodemailer.createTransport({
        service:"gmail",
@@ -76,7 +126,7 @@ export const sendEmail=async(token:string,email:string)=>{
     const mail={
         from:process.env.EMAIL_USER,
         to:email,
-        subject:"Verify Your Email",
+        subject:subject,
         text:textcontent,
         html:htmlcontent
     }
@@ -92,7 +142,7 @@ export const sendEmail=async(token:string,email:string)=>{
     } catch (error) {
         return {
             success:false,
-            message:"email verification could not be sent.",
+            message:"email could not be sent.",
             
         }
     }

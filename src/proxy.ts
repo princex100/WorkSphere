@@ -47,7 +47,9 @@ export async function proxy(request: NextRequest) {
             "/api/google-oauth",
             "/api/auth/google",
             "/api/auth/google-oauth",
-            "/api/auth/github"
+            "/api/auth/github",
+            "/api/auth/forgot-password",
+            "/api/auth/reset-password"
         ];
 
     if(request.method==="OPTIONS"){

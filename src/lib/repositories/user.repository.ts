@@ -208,6 +208,29 @@ export const deletJWTfromDB=async(userid:string)=>{
 
 }
 
+export const savepasswordResetToken=async(token:string,user_id:string)=>{
+    const result=await pool.query(
+        `INSERT INTO password_reset_tokens(
+            token,
+            user_id,
+            expires_at
+        )
+        VALUES(
+            $1,
+            $2,
+            $3
+        ) 
+       
+        RETURNING id,
+        token,
+        user_id,
+        expires_at`,
+
+        [token,user_id,new Date(Date.now()+15*60*1000)]
+    )
+    return result.rows[0] ?? null;
+}
+
 
 
 
