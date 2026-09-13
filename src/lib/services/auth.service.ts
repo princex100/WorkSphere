@@ -1,11 +1,22 @@
- import { registerValidator } from "../validators/auth.validators";
-import { ApiError } from "../../lib/errors/ApiError";
+import { registerValidator } from "../validators/auth.validators";
+import { ApiError } from "@/lib/errors/ApiError";
 import crypto from 'crypto'
 import { sendEmail } from "../utils/sendEmail";
-import { createUserInDB, saveHashedToken, findEmailToken, findUserbyId, updateUserInDB, deletePreviousTokens, findUserByUsername, findUserByUsernameOrEmail, deletJWTfromDB } from "../repositories/user.repository";
+import { 
+    createUserInDB, 
+    saveHashedToken, 
+    findEmailToken, 
+    findUserbyId, 
+    updateUserInDB, 
+    deletePreviousTokens, 
+    findUserByUsername, 
+    findUserByUsernameOrEmail, 
+    deletJWTfromDB,
+    saveRefreshTokenInDB, 
+    findUserByEmail 
+} from "../repositories/user.repository";
 import bcrypt from "bcrypt"
 import { generateJwtTokens } from "../auth/jwt";
-import { saveRefreshTokenInDB, findUserByEmail } from "../repositories/user.repository";
  
 
  

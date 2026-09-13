@@ -44,11 +44,12 @@ export const jwtverify=async(request:NextRequest)=>{
     throw new ApiError("Unauthorized",401,[{ field:"token", message:"token is expired or invalid" }])
    }
 
-   const isUser:Response_body=await fetch(`${process.env.BACKEND_API_BASE_URL}/users/current-user?userId=${payload.id}`,{
+   const baseUrl=process.env.BACKEND_API_BASE_URL || `${request.nextUrl.origin}/api`;
+   const isUser:Response_body=await fetch(`${baseUrl}/users/current-user?userId=${payload.id}`,{
     method:"GET",
      headers:{
        "Authorization":`Bearer ${access_token}`,
-       "internal_secret":process.env.INTERNAL_SECRET!
+       "internal_secret":process.env.INTERNAL_SECRET || ""
      }
    }).then((res)=>res.json());
 

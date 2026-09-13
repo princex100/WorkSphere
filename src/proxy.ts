@@ -38,11 +38,15 @@ export async function proxy(request: NextRequest) {
         
         const apipublicpaths = [
             "/api/users/current-user",
+            "/api/auth/register",
+            "/api/auth/login",
             "/api/register",
             "/api/login",
             "/api/verify-email",
+            "/api/auth/verify-email",
             "/api/google-oauth",
             "/api/auth/google",
+            "/api/auth/google-oauth",
             "/api/auth/github"
         ];
 
