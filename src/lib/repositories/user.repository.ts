@@ -197,6 +197,17 @@ export const findUserByUsernameOrEmail=async(credential:string)=>{
     return result.rows[0] ?? null;
 }
 
+export const deletJWTfromDB=async(userid:string)=>{
+
+    const result=await pool.query(
+        `DELETE FROM refresh_tokens WHERE user_id=$1`,
+        [userid]
+    )
+
+    return result.rows[0] ?? null;
+
+}
+
 
 
 

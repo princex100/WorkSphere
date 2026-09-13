@@ -2,7 +2,7 @@
 import { ApiError } from "../../lib/errors/ApiError";
 import crypto from 'crypto'
 import { sendEmail } from "../utils/sendEmail";
-import { createUserInDB, saveHashedToken, findEmailToken, findUserbyId, updateUserInDB, deletePreviousTokens, findUserByUsername, findUserByUsernameOrEmail } from "../repositories/user.repository";
+import { createUserInDB, saveHashedToken, findEmailToken, findUserbyId, updateUserInDB, deletePreviousTokens, findUserByUsername, findUserByUsernameOrEmail, deletJWTfromDB } from "../repositories/user.repository";
 import bcrypt from "bcrypt"
 import { generateJwtTokens } from "../auth/jwt";
 import { saveRefreshTokenInDB, findUserByEmail } from "../repositories/user.repository";
@@ -299,5 +299,20 @@ export const loginUser=async(data:loginRequestType)=>{
    }
 
 }
+
+
+export const logout=async(userId:string)=>{
+
+    const isJWTtokenDeleted=await deletJWTfromDB(userId);
+
+    
+
+    return {
+        success:true,
+        message:"User logged out successfully",
+        
+    }
+}
+
 
 
