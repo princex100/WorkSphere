@@ -19,7 +19,7 @@ export const POST=asynchandler(async(request:NextRequest)=>{
 
     if(user.success){
         return NextResponse.json(
-           new ApiResponse(201,user.message,user.user)
+           new ApiResponse(201,user.user,user.message)
         )
     }
    

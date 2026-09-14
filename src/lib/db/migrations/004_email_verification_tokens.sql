@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS email_verification_tokens(
     user_id UUID NOT NULL,
     token TEXT NOT NULL,
     expires_at TIMESTAMP NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 )

@@ -7,17 +7,23 @@ import { ApiResponse } from "@/lib/responses/ApiResponse";
 export const POST=asynchandler(async(request:NextRequest)=>{
     
 
-    const token= await request.json();
-    
+    const body= await request.json();
 
-    if(!token.access_token){
+    if(!body){
+        throw new ApiError("body is required",400,[{field:"body",message:"body is required"}])
+    }
+
+
+    const accessToken=body?.access_token || body.token
+
+    if(!accessToken || typeof accessToken!=="string" || accessToken.trim()===null || accessToken.trim()=== ""){
         throw new ApiError("token is required",400,[
             {field:"token",message:"token is required"}
         ])
     }
 
 
-    const userInfo=await googleOauth(token.access_token);
+    const userInfo=await googleOauth(accessToken);
     
     const options1={
         httpOnly:true,
@@ -34,7 +40,7 @@ export const POST=asynchandler(async(request:NextRequest)=>{
 
     if(userInfo.success){
         const response= NextResponse.json(
-            new ApiResponse(200,userInfo,"user info is here")
+            new ApiResponse(200,userInfo.user,"user info is here")
         )
 
         response.cookies.set("accessToken",userInfo.accessToken,options1 as any)

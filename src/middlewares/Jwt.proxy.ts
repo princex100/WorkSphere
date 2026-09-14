@@ -1,74 +1,75 @@
 import { ApiError } from "@/lib/errors/ApiError";
-import { NextRequest,NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken"
 import { jwtVerify } from "jose";
 
 
 
-export const jwtverify=async(request:NextRequest)=>{
+export const jwtverify = async (request: NextRequest) => {
 
-     type Response_body={
-        success:boolean,
-        message:string,
-        user:null
-     }
+  type Response_body = {
+    success: boolean,
+    message: string,
+    user: null
+  }
 
-   const access_token=request.cookies.get("accessToken")?.value || request.headers.get("Authorization")?.split(" ")[1];
+  const access_token = request.cookies.get("accessToken")?.value || request.headers.get("Authorization")?.split(" ")[1];
 
-   if(!access_token){
-      throw new ApiError("Unauthorized",401,[{ field:"token", message:"token is required" }])
-   }
-
-
-    type JwtPayload={
-    id:string,
-    username:string,
-    email:string,
-    role:string
-   }
-
-   const secret=new TextEncoder().encode(process.env.ACCESS_TOKEN_SECRET)
-
-   let payload:JwtPayload;
-
-   try {
-       const res=await jwtVerify<JwtPayload>(access_token,secret) 
-       payload=res.payload
-       
-   } catch (error) {
-    throw new ApiError("Unauthorized",401,[{ field:"token", message:"token is expired or invalid" }])
-   }
+  if (!access_token) {
+    throw new ApiError("Unauthorized", 401, [{ field: "token", message: "token is required" }])
+  }
 
 
-   if(!payload){
-    throw new ApiError("Unauthorized",401,[{ field:"token", message:"token is expired or invalid" }])
-   }
+  type JwtPayload = {
+    id: string,
+    username: string,
+    email: string,
+    role: string
+  }
 
-   const baseUrl=process.env.BACKEND_API_BASE_URL || `${request.nextUrl.origin}/api`;
-   const isUser:Response_body=await fetch(`${baseUrl}/users/current-user?userId=${payload.id}`,{
-    method:"GET",
-     headers:{
-       "Authorization":`Bearer ${access_token}`,
-       "internal_secret":process.env.INTERNAL_SECRET || ""
-     }
-   }).then((res)=>res.json());
+  const secret = new TextEncoder().encode(process.env.ACCESS_TOKEN_SECRET)
 
-  
+  let payload: JwtPayload;
 
-   if(!isUser.success){
-    throw new ApiError("Unauthorized",401,[{ field:"token", message:"token is expired or invalid" }])
-   }
+  try {
+    const res = await jwtVerify<JwtPayload>(access_token, secret)
+    payload = res.payload
+
+  } catch (error) {
+    throw new ApiError("Unauthorized", 401, [{ field: "token", message: "token is expired or invalid" }])
+  }
 
 
- const requestheadersjwt=new Headers(request.headers);
+  if (!payload) {
+    throw new ApiError("Unauthorized", 401, [{ field: "token", message: "token is expired or invalid" }])
+  }
 
-  requestheadersjwt.set("user",payload.id);
-  requestheadersjwt.set("role",payload.role)
+  const baseurl=process.env.BACKEND_API_BASE_URL || `${request.nextUrl.origin}/api`;
+
+  const isUser: Response_body = await fetch(`${baseurl}/users/current-user?userId=${payload.id}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${access_token}`,
+      "internal_secret": process.env.INTERNAL_SECRET!
+    }
+  }).then((res) => res.json());
+
+
+
+  if (!isUser.success) {
+    throw new ApiError("Unauthorized", 401, [{ field: "token", message: "token is expired or invalid" }])
+  }
+
+
+  const requestheadersjwt = new Headers(request.headers);
+
+  requestheadersjwt.set("user", payload.id);
+  requestheadersjwt.set("role", payload.role)
 
 
   return {
-    success:true,
-    message:"token is valid",
+    success: true,
+    message: "token is valid",
     requestheadersjwt
   };
 

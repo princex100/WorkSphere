@@ -60,6 +60,9 @@ export const generateRefreshToken=(userId:string,user:User)=>{
 export const generateJwtTokens=async(userId:string)=>{
    
         const user=await findUserbyId(userId);
+        if(!user){
+            throw new ApiError("User not found",500,[{field:"user",message:"user not found"}])
+        }
         const accessToken=generateAccessToken(userId,user)
         const refreshToken=generateRefreshToken(userId,user)
         return {

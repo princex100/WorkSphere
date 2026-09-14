@@ -1,21 +1,21 @@
 import { inputData_type } from "../validators/auth.validators"
 import pool from "../db"
 
-type userDataType={
-    name:string,
-    username?:string,
-    email:string,
-    password_hash:string,
-    avatar_url:string,
+type userDataType = {
+    name: string,
+    username?: string,
+    email: string,
+    password_hash: string,
+    avatar_url: string,
 
-    mobile:string,
-    country_code:string,
-    global_role:string,
-    is_email_verified:boolean
+    mobile: string,
+    country_code: string,
+    global_role: string,
+    is_email_verified: boolean
 }
-export const createUserInDB=async(userdata:userDataType)=>{
+export const createUserInDB = async (userdata: userDataType) => {
 
-   const result = await pool.query(
+    const result = await pool.query(
 
         `INSERT INTO users(
         name,
@@ -60,8 +60,8 @@ export const createUserInDB=async(userdata:userDataType)=>{
 
 }
 
-export const saveHashedToken=async(token:string,user_id:string)=>{
-    const result=await pool.query(
+export const saveHashedToken = async (token: string, user_id: string) => {
+    const result = await pool.query(
         `INSERT INTO email_verification_tokens(
             token,
             user_id,
@@ -77,13 +77,13 @@ export const saveHashedToken=async(token:string,user_id:string)=>{
         user_id,
         expires_at`,
 
-        [token,user_id,new Date(Date.now()+15*60*1000)]
+        [token, user_id, new Date(Date.now() + 15 * 60 * 1000)]
     )
     return result.rows[0] ?? null;
 }
 
-export const findUserbyId=async(id:string)=>{
-    const result=await pool.query(
+export const findUserbyId = async (id: string) => {
+    const result = await pool.query(
         `SELECT 
         id,
         name,
@@ -99,12 +99,12 @@ export const findUserbyId=async(id:string)=>{
         `,
         [id]
     )
-    
+
     return result.rows[0] ?? null;
 }
 
-export const findEmailToken=async(token:string)=>{
-    const result=await pool.query(
+export const findEmailToken = async (token: string) => {
+    const result = await pool.query(
         `SELECT * FROM email_verification_tokens WHERE token=$1 AND expires_at > CURRENT_TIMESTAMP`,
         [token]
     )
@@ -112,8 +112,8 @@ export const findEmailToken=async(token:string)=>{
 }
 
 
-export const updateUserInDB=async(userId:string,user:userDataType)=>{
-    const result=await pool.query(
+export const updateUserInDB = async (userId: string, user: userDataType) => {
+    const result = await pool.query(
         `UPDATE users SET 
         is_email_verified=$1,
         updated_at=CURRENT_TIMESTAMP
@@ -131,24 +131,24 @@ export const updateUserInDB=async(userId:string,user:userDataType)=>{
         created_at,
         updated_at`,
         [
-           true,
+            true,
             userId
         ]
     )
     return result.rows[0] ?? null;
 }
 
-export const deletePreviousTokens=async(userid:string)=>{
-      await pool.query(
+export const deletePreviousTokens = async (userid: string) => {
+    await pool.query(
         ` DELETE FROM email_verification_tokens 
-        WHERE user_id=$1`,[userid]
+        WHERE user_id=$1`, [userid]
     )
 
-    return {success:true,message:"previous tokens deleted successfully."}
+    return { success: true, message: "previous tokens deleted successfully." }
 }
 
-export const saveRefreshTokenInDB=async(token:string,user_id:string)=>{
-    const result=await pool.query(
+export const saveRefreshTokenInDB = async (token: string, user_id: string) => {
+    const result = await pool.query(
         `INSERT INTO refresh_tokens(
             token,
             user_id,
@@ -165,51 +165,51 @@ export const saveRefreshTokenInDB=async(token:string,user_id:string)=>{
         user_id,
         expires_at`,
 
-        [token,user_id,new Date(Date.now()+7*24*60*60*1000)]
+        [token, user_id, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)]
     )
     return result.rows[0] ?? null;
 }
 
-export const findUserByEmail=async(email:string)=>{
+export const findUserByEmail = async (email: string) => {
 
-    const result=await pool.query(
+    const result = await pool.query(
         `SELECT * FROM users WHERE email=$1`,
         [email]
     )
     return result.rows[0] ?? null;
 }
 
-export const findUserByUsername=async(username:string)=>{
+export const findUserByUsername = async (username: string) => {
 
-    const result=await pool.query(
-        `SELECT * FROM users WHERE name=$1`,
+    const result = await pool.query(
+        `SELECT * FROM users WHERE username=$1`,
         [username]
     )
     return result.rows[0] ?? null;
 }
 
-export const findUserByUsernameOrEmail=async(credential:string)=>{
+export const findUserByUsernameOrEmail = async (credential: string) => {
 
-    const result=await pool.query(
-        `SELECT * FROM users WHERE email=$1 OR name=$1`,
+    const result = await pool.query(
+        `SELECT * FROM users WHERE email=$1 OR username=$1`,
         [credential]
     )
     return result.rows[0] ?? null;
 }
 
-export const deletJWTfromDB=async(userid:string)=>{
+export const deletJWTfromDB = async (userid: string) => {
 
-    const result=await pool.query(
+    const result = await pool.query(
         `DELETE FROM refresh_tokens WHERE user_id=$1`,
         [userid]
     )
 
-    return result.rows[0] ?? null;
+    return true
 
 }
 
-export const savepasswordResetToken=async(token:string,user_id:string)=>{
-    const result=await pool.query(
+export const savepasswordResetToken = async (token: string, user_id: string) => {
+    const result = await pool.query(
         `INSERT INTO password_reset_tokens(
             token,
             user_id,
@@ -226,9 +226,52 @@ export const savepasswordResetToken=async(token:string,user_id:string)=>{
         user_id,
         expires_at`,
 
-        [token,user_id,new Date(Date.now()+15*60*1000)]
+        [token, user_id, new Date(Date.now() + 15 * 60 * 1000)]
     )
     return result.rows[0] ?? null;
+}
+
+
+export const updatePasswordById = async (userid: string, password: string) => {
+
+    const result = await pool.query(
+        `UPDATE  users SET password_hash=$1 WHERE id=$2
+         RETURNING id,
+        name,
+        username,
+        email,
+        avatar_url,
+        mobile,
+        country_code,
+        global_role,
+        is_email_verified,
+        created_at,
+        updated_at 
+        `,
+        [password, userid]
+    )
+
+    return result.rows[0] ?? null;
+}
+
+export const findPasswordResetToken = async (token: string) => {
+    const result = await pool.query(
+        `SELECT *
+         FROM password_reset_tokens 
+         WHERE token=$1 AND expires_at > CURRENT_TIMESTAMP
+         `,
+        [token]
+    )
+    return result.rows[0] ?? null;
+}
+
+export const deletePasswordResetTokens = async (userid: string) => {
+    await pool.query(
+        `DELETE FROM password_reset_tokens WHERE user_id=$1`,
+        [userid]
+    )
+    return true
+
 }
 
 
