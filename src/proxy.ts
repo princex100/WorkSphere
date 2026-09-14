@@ -33,6 +33,7 @@ export async function proxy(request: NextRequest) {
             "/login",
             "/signUp",
             "/signUp/google-oauth",
+            "/google-oauth",
             "/verify-email"
         ];
         
@@ -134,7 +135,7 @@ export async function proxy(request: NextRequest) {
     }
 
     if(!token){
-        return NextResponse.redirect(new URL("/login",request.nextUrl))
+        return NextResponse.redirect(new URL("/",request.nextUrl))
     }
 
     return response

@@ -39,7 +39,7 @@ export const POST=asynchandler(async(request:NextRequest)=>{
 
     const result = await resetPassword(token,data.password)
     
-    return NextResponse.json(new ApiResponse(200,result.user,result.message))
+    return NextResponse.json(new ApiResponse(200,result.user,"password reset successfull."))
 
     
     

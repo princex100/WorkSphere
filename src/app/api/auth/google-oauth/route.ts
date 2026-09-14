@@ -45,7 +45,6 @@ export const POST=asynchandler(async(request:NextRequest)=>{
 
         response.cookies.set("accessToken",userInfo.accessToken,options1 as any)
         response.cookies.set("refreshToken",userInfo.refreshToken,options2 as any)
-        
         return response;
     }
     else{
