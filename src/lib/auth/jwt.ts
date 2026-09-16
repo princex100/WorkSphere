@@ -4,7 +4,7 @@ import { ApiError } from "../errors/ApiError";
 import { findUserbyId } from "../repositories/user.repository";
 
 
-const generateAccessToken=(userId:string,user:User)=>{
+export const generateAccessToken=(userId:string,user:User)=>{
     
     const secret=process.env.ACCESS_TOKEN_SECRET;
     if(!secret){

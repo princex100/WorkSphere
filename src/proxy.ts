@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { ApiError } from './lib/errors/ApiError'
 import { jwtverify } from './middlewares/Jwt.proxy'
+import { rateLimitMiddleware } from './middlewares/rateLimit.middleware'
  
 // This function can be marked `async` if using `await` inside
 export async function proxy(request: NextRequest) {
@@ -50,7 +51,8 @@ export async function proxy(request: NextRequest) {
             "/api/auth/google-oauth",
             "/api/auth/github",
             "/api/auth/forgot-password",
-            "/api/auth/reset-password"
+            "/api/auth/reset-password",
+            "/api/auth/refresh"
         ];
 
     if(request.method==="OPTIONS"){
@@ -89,6 +91,8 @@ export async function proxy(request: NextRequest) {
    const pathname=request.nextUrl.pathname
 
    if(pathname.startsWith("/api")){
+
+     await rateLimitMiddleware(request);
 
      if(apipublicpaths.includes(pathname)){
         return response

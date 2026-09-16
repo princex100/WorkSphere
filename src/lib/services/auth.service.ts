@@ -4,6 +4,7 @@ import crypto, { hash } from 'crypto'
 import { sendEmail } from "../utils/sendEmail";
 import {
     createUserInDB,
+    createUserWithPersonalWorkspaceInDB,
     saveHashedToken,
     findEmailToken,
     findUserbyId,
@@ -16,10 +17,12 @@ import {
     findUserByEmail,
     findPasswordResetToken,
     deletePasswordResetTokens,
-
+    findRefreshTokenInDB,
 } from "../repositories/user.repository";
 import bcrypt from "bcrypt"
-import { generateJwtTokens } from "../auth/jwt";
+import { generateJwtTokens, generateAccessToken } from "../auth/jwt";
+import { jwtVerify } from "jose";
+import { JWTExpired, JWTInvalid } from "jose/errors";
 
 import { loginValidator } from "../validators/auth.validators";
 import { savepasswordResetToken } from "../repositories/user.repository";
@@ -73,7 +76,8 @@ export const registerUser = async (data: Data) => {
     }
 
 
-    const createdUser = await createUserInDB(response);
+    const userCreationResult = await createUserWithPersonalWorkspaceInDB(response);
+    const createdUser = userCreationResult?.user;
 
     if (!createdUser) {
         throw new ApiError("User could not be created.", 500, [{
@@ -245,7 +249,8 @@ export const googleOauth = async (token: string) => {
 
     }
 
-    const createdUser = await createUserInDB(user);
+    const userCreationResult = await createUserWithPersonalWorkspaceInDB(user);
+    const createdUser = userCreationResult?.user;
 
     if (!createdUser) {
         throw new ApiError("user could not be created", 500, [{ field: "user", message: "user could not be created" }])
@@ -463,6 +468,76 @@ export const resetPassword = async (token: string, password: string) => {
 
 
 }
+
+export const refreshAccessToken = async (refreshToken: string) => {
+    if (!refreshToken) {
+        throw new ApiError("Unauthorized", 401, [
+            { field: "token", message: "token is required" }
+        ]);
+    }
+
+    const secretString = process.env.REFRESH_TOKEN_SECRET;
+    if (!secretString) {
+        throw new ApiError("Refresh token secret not found", 500);
+    }
+
+    const secret = new TextEncoder().encode(secretString);
+
+    type RefreshJwtPayload = {
+        id: string;
+        username: string;
+        email: string;
+        role: string;
+    };
+
+    let payload: RefreshJwtPayload;
+
+    try {
+        const res = await jwtVerify<RefreshJwtPayload>(refreshToken, secret);
+        payload = res.payload;
+    } catch (error) {
+        if (error instanceof JWTExpired) {
+            throw new ApiError("Unauthorized", 401, [
+                { field: "token", message: "TOKEN_EXPIRED" }
+            ]);
+        }
+        if (error instanceof JWTInvalid) {
+            throw new ApiError("Unauthorized", 401, [
+                { field: "token", message: "TOKEN_INVALID" }
+            ]);
+        }
+        throw new ApiError("Unauthorized", 401, [
+            { field: "token", message: "TOKEN_INVALID" }
+        ]);
+    }
+
+    if (!payload || !payload.id) {
+        throw new ApiError("Unauthorized", 401, [
+            { field: "token", message: "TOKEN_INVALID" }
+        ]);
+    }
+
+    const existingTokenInDB = await findRefreshTokenInDB(refreshToken);
+    if (!existingTokenInDB) {
+        throw new ApiError("Unauthorized", 401, [
+            { field: "token", message: "TOKEN_INVALID" }
+        ]);
+    }
+
+    const user = await findUserbyId(payload.id);
+    if (!user) {
+        throw new ApiError("User not found", 404, [
+            { field: "user", message: "user not found" }
+        ]);
+    }
+
+    const accessToken = generateAccessToken(user.id, user);
+
+    return {
+        accessToken,
+        user
+    };
+};
 
 
 

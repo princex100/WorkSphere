@@ -2,6 +2,9 @@ import { ApiError } from "@/lib/errors/ApiError";
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken"
 import { jwtVerify } from "jose";
+import { id } from "zod/locales";
+import { JWTExpired,JWTInvalid } from "jose/errors";
+
 
 
 
@@ -36,7 +39,16 @@ export const jwtverify = async (request: NextRequest) => {
     payload = res.payload
 
   } catch (error) {
-    throw new ApiError("Unauthorized", 401, [{ field: "token", message: "token is expired or invalid" }])
+
+    if(error instanceof JWTExpired){
+      throw new ApiError("Unauthorized", 401, [{ field: "token", message: "TOKEN_EXPIRED" }])
+    }
+   else if(error instanceof JWTInvalid){
+      throw new ApiError("Unauthorized", 401, [{ field: "token", message: "TOKEN_INVALID" }])
+    }
+      throw new ApiError("Unauthorized", 401, [{ field: "token", message: "TOKEN_INVALID" }])
+
+
   }
 
 
