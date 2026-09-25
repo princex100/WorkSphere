@@ -5,6 +5,7 @@ import { ApiError } from "@/lib/errors/ApiError";
 import { updateVaultFileValidator } from "@/lib/validators/vault.validators";
 import { uuidValidator } from "@/lib/validators/project.validators";
 import { updatePersonalFile, deletePersonalFile } from "@/lib/services/vault.service";
+import { requireVaultSession } from "@/lib/utils/requireVaultSession";
 
 interface RouteContext {
     params: Promise<{ id: string }>;
@@ -15,6 +16,8 @@ export const PATCH = asynchandler(async (request: NextRequest, context?: unknown
     if (!userId) {
         throw new ApiError("Unauthorized", 401, [{ field: "user", message: "Unauthorized request" }]);
     }
+
+    await requireVaultSession(request, userId);
 
     const { id } = await (context as RouteContext).params;
     const uuidCheck = uuidValidator(id);
@@ -46,6 +49,8 @@ export const DELETE = asynchandler(async (request: NextRequest, context?: unknow
     if (!userId) {
         throw new ApiError("Unauthorized", 401, [{ field: "user", message: "Unauthorized request" }]);
     }
+
+    await requireVaultSession(request, userId);
 
     const { id } = await (context as RouteContext).params;
     const uuidCheck = uuidValidator(id);

@@ -4,12 +4,15 @@ import { ApiResponse } from "@/lib/responses/ApiResponse";
 import { ApiError } from "@/lib/errors/ApiError";
 import { createVaultNoteValidator } from "@/lib/validators/vault.validators";
 import { createPersonalNote, getPersonalNotes } from "@/lib/services/vault.service";
+import { requireVaultSession } from "@/lib/utils/requireVaultSession";
 
 export const GET = asynchandler(async (request: NextRequest) => {
     const userId = request.headers.get("user");
     if (!userId) {
         throw new ApiError("Unauthorized", 401, [{ field: "user", message: "Unauthorized request" }]);
     }
+
+    await requireVaultSession(request, userId);
 
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get("search") || undefined;
@@ -28,6 +31,8 @@ export const POST = asynchandler(async (request: NextRequest) => {
     if (!userId) {
         throw new ApiError("Unauthorized", 401, [{ field: "user", message: "Unauthorized request" }]);
     }
+
+    await requireVaultSession(request, userId);
 
     let body: unknown;
     try {

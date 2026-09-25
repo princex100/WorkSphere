@@ -22,6 +22,7 @@ import {
 } from "../repositories/vault.repository";
 import { uploadBufferToCloudinary, deleteFromCloudinary } from "../utils/cloudinary";
 import { PersonalFile, PersonalLink, PersonalNote, VaultSummary } from "@/types/vault.type";
+import { createVaultSession, destroyVaultSession } from "@/lib/vault-session";
 
 // ==================== VAULT AUTH / PROTECTION ====================
 
@@ -61,16 +62,20 @@ export const setVaultPassword = async (
 export const unlockVault = async (
     userId: string,
     password: string
-): Promise<{ success: boolean; message: string }> => {
+): Promise<{ success: boolean; message: string; sessionToken: string }> => {
     if (!userId) {
         throw new ApiError("Unauthorized", 401, [{ field: "user", message: "Authentication required" }]);
     }
 
     const hash = await getVaultPasswordHash(userId);
     if (!hash) {
+        // No password set — vault is open by design. Issue a session anyway so
+        // the frontend can treat this user as having a valid vault session.
+        const sessionToken = await createVaultSession(userId);
         return {
             success: true,
-            message: "No vault password set. Vault unlocked."
+            message: "No vault password set. Vault unlocked.",
+            sessionToken
         };
     }
 
@@ -81,10 +86,22 @@ export const unlockVault = async (
         ]);
     }
 
+    // bcrypt matched — create a Redis vault session (30 min TTL by default).
+    const sessionToken = await createVaultSession(userId);
+
     return {
         success: true,
-        message: "Vault unlocked successfully"
+        message: "Vault unlocked successfully",
+        sessionToken
     };
+};
+
+export const lockVault = async (userId: string): Promise<{ success: boolean }> => {
+    if (!userId) {
+        throw new ApiError("Unauthorized", 401, [{ field: "user", message: "Authentication required" }]);
+    }
+    await destroyVaultSession(userId);
+    return { success: true };
 };
 
 export const getVaultSummary = async (userId: string): Promise<VaultSummary> => {

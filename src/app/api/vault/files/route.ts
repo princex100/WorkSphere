@@ -3,12 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { ApiResponse } from "@/lib/responses/ApiResponse";
 import { ApiError } from "@/lib/errors/ApiError";
 import { uploadPersonalFile, getPersonalFiles } from "@/lib/services/vault.service";
+import { requireVaultSession } from "@/lib/utils/requireVaultSession";
 
 export const GET = asynchandler(async (request: NextRequest) => {
     const userId = request.headers.get("user");
     if (!userId) {
         throw new ApiError("Unauthorized", 401, [{ field: "user", message: "Unauthorized request" }]);
     }
+
+    // Requires both a valid JWT (set by proxy) AND an active vault session.
+    await requireVaultSession(request, userId);
 
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get("search") || undefined;
@@ -27,6 +31,8 @@ export const POST = asynchandler(async (request: NextRequest) => {
     if (!userId) {
         throw new ApiError("Unauthorized", 401, [{ field: "user", message: "Unauthorized request" }]);
     }
+
+    await requireVaultSession(request, userId);
 
     let formData: FormData;
     try {
