@@ -52,7 +52,8 @@ export async function proxy(request: NextRequest) {
             "/api/auth/github",
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
-            "/api/auth/refresh"
+            "/api/auth/refresh",
+            "/api/webhooks/github"
         ];
 
     if(request.method==="OPTIONS"){

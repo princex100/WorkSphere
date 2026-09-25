@@ -359,6 +359,17 @@ export const findRefreshTokenInDB = async (token: string) => {
     return result.rows[0] ?? null;
 };
 
+export const updateUserAvatarInDB = async (userId: string, avatarUrl: string) => {
+    const result = await pool.query(
+        `UPDATE users
+         SET avatar_url = $2, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1
+         RETURNING id, name, username, email, avatar_url, mobile, country_code, global_role, is_email_verified, created_at, updated_at`,
+        [userId, avatarUrl]
+    );
+    return result.rows[0] ?? null;
+};
+
 
 
 

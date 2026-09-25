@@ -4,11 +4,13 @@ import {
     findProjectsByWorkspaceAndUser,
     findProjectByIdAndUser,
     updateProjectInDB,
-    deleteProjectInDB
+    deleteProjectInDB,
+    countProjectsInWorkspace
 } from "../repositories/project.repository";
 import { getCurrentWorkspace, verifyWorkspaceMembership } from "./workspace.service";
 import { Project, ProjectWithWorkspace } from "@/types/project.type";
-import { ProjectStatus } from "@/constants";
+import { ProjectStatus, PERSONAL_WORKSPACE_PROJECT_LIMIT, ACTIVITY_ACTION, ENTITY_TYPE } from "@/constants";
+import { logActivity } from "./activity.service";
 
 export interface CreateProjectDTO {
     name: string;
@@ -40,16 +42,32 @@ export const createProject = async (
     let targetWorkspaceId = data.workspace_id;
 
     if (targetWorkspaceId) {
-        // Explicit workspace requested: verify user is a member with write permission
+        // Explicit workspace requested: verify user is OWNER or ADMIN
         await verifyWorkspaceMembership(targetWorkspaceId, userId, [
             "OWNER",
-            "ADMIN",
-            "MEMBER"
+            "ADMIN"
         ]);
     } else {
         // Default to the user's primary/personal workspace
         const currentWorkspace = await getCurrentWorkspace(userId);
         targetWorkspaceId = currentWorkspace.id;
+
+        // Verify role in default workspace
+        await verifyWorkspaceMembership(targetWorkspaceId, userId, [
+            "OWNER",
+            "ADMIN"
+        ]);
+    }
+
+    // Check project limit in workspace
+    const projectCount = await countProjectsInWorkspace(targetWorkspaceId);
+    if (projectCount >= PERSONAL_WORKSPACE_PROJECT_LIMIT) {
+        throw new ApiError("Project limit reached", 400, [
+            {
+                field: "project",
+                message: `You can create a maximum of ${PERSONAL_WORKSPACE_PROJECT_LIMIT} projects in your personal workspace`
+            }
+        ]);
     }
 
     const startDate = data.start_date ? new Date(data.start_date) : null;
@@ -76,6 +94,17 @@ export const createProject = async (
             { field: "project", message: "Failed to create project" }
         ]);
     }
+
+    // Log Activity
+    await logActivity({
+        workspace_id: targetWorkspaceId,
+        actor_id: userId,
+        project_id: newProject.id,
+        action: ACTIVITY_ACTION.PROJECT_CREATED,
+        entity_type: ENTITY_TYPE.PROJECT,
+        entity_id: newProject.id,
+        metadata: { name: newProject.name, status: newProject.status }
+    });
 
     return newProject;
 };
@@ -136,6 +165,12 @@ export const updateProject = async (
         ]);
     }
 
+    // Verify user is OWNER or ADMIN of the workspace
+    await verifyWorkspaceMembership(existingProject.workspace_id, userId, [
+        "OWNER",
+        "ADMIN"
+    ]);
+
     const startDate = data.start_date !== undefined ? (data.start_date ? new Date(data.start_date) : null) : undefined;
     const dueDate = data.due_date !== undefined ? (data.due_date ? new Date(data.due_date) : null) : undefined;
 
@@ -162,6 +197,17 @@ export const updateProject = async (
         ]);
     }
 
+    // Log Activity
+    await logActivity({
+        workspace_id: existingProject.workspace_id,
+        actor_id: userId,
+        project_id: projectId,
+        action: ACTIVITY_ACTION.PROJECT_UPDATED,
+        entity_type: ENTITY_TYPE.PROJECT,
+        entity_id: projectId,
+        metadata: { name: updated.name, status: updated.status }
+    });
+
     return updated;
 };
 
@@ -175,12 +221,36 @@ export const deleteProject = async (
         ]);
     }
 
+    const existingProject = await findProjectByIdAndUser(projectId, userId);
+    if (!existingProject) {
+        throw new ApiError("Project not found", 404, [
+            { field: "project", message: "Project not found" }
+        ]);
+    }
+
+    // Verify user is OWNER or ADMIN of the workspace
+    await verifyWorkspaceMembership(existingProject.workspace_id, userId, [
+        "OWNER",
+        "ADMIN"
+    ]);
+
     const deleted = await deleteProjectInDB(projectId, userId);
     if (!deleted) {
         throw new ApiError("Project not found", 404, [
             { field: "project", message: "Project not found or already deleted" }
         ]);
     }
+
+    // Log Activity
+    await logActivity({
+        workspace_id: existingProject.workspace_id,
+        actor_id: userId,
+        project_id: null,
+        action: ACTIVITY_ACTION.PROJECT_DELETED,
+        entity_type: ENTITY_TYPE.PROJECT,
+        entity_id: projectId,
+        metadata: { name: existingProject.name }
+    });
 
     return { id: projectId };
 };

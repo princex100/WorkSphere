@@ -13,6 +13,7 @@
     "@react-oauth/google": "^0.13.5",
     "axios": "^1.20.0",
     "bcrypt": "^6.0.0",
+    "cloudinary": "^2.11.0",
     "crypt": "^0.0.2",
     "crypto": "^1.0.1",
     "dotenv": "^17.4.2",

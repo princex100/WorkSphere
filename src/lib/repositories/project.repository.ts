@@ -149,3 +149,11 @@ export const deleteProjectInDB = async (
     );
     return (result.rowCount ?? 0) > 0;
 };
+
+export const countProjectsInWorkspace = async (workspaceId: string): Promise<number> => {
+    const result = await pool.query(
+        `SELECT COUNT(*)::INT AS count FROM projects WHERE workspace_id = $1`,
+        [workspaceId]
+    );
+    return result.rows[0]?.count ?? 0;
+};
