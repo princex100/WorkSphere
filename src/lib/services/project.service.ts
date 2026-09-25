@@ -11,6 +11,7 @@ import { getCurrentWorkspace, verifyWorkspaceMembership } from "./workspace.serv
 import { Project, ProjectWithWorkspace } from "@/types/project.type";
 import { ProjectStatus, PERSONAL_WORKSPACE_PROJECT_LIMIT, ACTIVITY_ACTION, ENTITY_TYPE } from "@/constants";
 import { logActivity } from "./activity.service";
+import { linkRepositoryToProject } from "./github.service";
 
 export interface CreateProjectDTO {
     name: string;
@@ -19,6 +20,13 @@ export interface CreateProjectDTO {
     start_date?: string | null;
     due_date?: string | null;
     workspace_id?: string;
+    github_repo?: {
+        repo_id: string;
+        repo_name: string;
+        repo_owner: string;
+        repo_url: string;
+        default_branch?: string;
+    };
 }
 
 export interface UpdateProjectDTO {
@@ -32,7 +40,7 @@ export interface UpdateProjectDTO {
 export const createProject = async (
     userId: string,
     data: CreateProjectDTO
-): Promise<Project> => {
+): Promise<ProjectWithWorkspace> => {
     if (!userId) {
         throw new ApiError("Unauthorized", 401, [
             { field: "user", message: "Authentication required" }
@@ -106,7 +114,15 @@ export const createProject = async (
         metadata: { name: newProject.name, status: newProject.status }
     });
 
-    return newProject;
+    let linkedGitHubRepo = null;
+    if (data.github_repo) {
+        linkedGitHubRepo = await linkRepositoryToProject(userId, newProject.id, data.github_repo);
+    }
+
+    return {
+        ...newProject,
+        github_repo: linkedGitHubRepo
+    };
 };
 
 export const getProjects = async (

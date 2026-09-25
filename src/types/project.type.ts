@@ -1,4 +1,5 @@
 import { ProjectStatus } from "@/constants";
+import { ProjectGitHubRepository } from "./github.type";
 
 export interface Project {
     id: string;
@@ -15,4 +16,5 @@ export interface Project {
 
 export interface ProjectWithWorkspace extends Project {
     workspace_name?: string;
+    github_repo?: ProjectGitHubRepository | null;
 }

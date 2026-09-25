@@ -27,7 +27,16 @@ const createProjectSchema = z.object({
         .datetime({ message: "due_date must be a valid ISO datetime string" })
         .optional()
         .nullable(),
-    workspace_id: z.string().uuid("Invalid workspace ID format").optional()
+    workspace_id: z.string().uuid("Invalid workspace ID format").optional(),
+    github_repo: z
+        .object({
+            repo_id: z.string().or(z.number()).transform((val) => String(val)),
+            repo_name: z.string({ message: "Repository name is required" }).min(1),
+            repo_owner: z.string({ message: "Repository owner is required" }).min(1),
+            repo_url: z.string({ message: "Repository URL is required" }).url("Must be a valid URL"),
+            default_branch: z.string().optional().default("main")
+        })
+        .optional()
 });
 
 const updateProjectSchema = z.object({

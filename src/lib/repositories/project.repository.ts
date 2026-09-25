@@ -60,10 +60,25 @@ export const findProjectsByWorkspaceAndUser = async (
             p.due_date,
             p.created_at,
             p.updated_at,
-            w.name AS workspace_name
+            w.name AS workspace_name,
+            CASE 
+                WHEN pgr.id IS NOT NULL THEN json_build_object(
+                    'id', pgr.id,
+                    'project_id', pgr.project_id,
+                    'repo_id', pgr.repo_id,
+                    'repo_name', pgr.repo_name,
+                    'repo_owner', pgr.repo_owner,
+                    'repo_url', pgr.repo_url,
+                    'default_branch', pgr.default_branch,
+                    'created_at', pgr.created_at,
+                    'updated_at', pgr.updated_at
+                )
+                ELSE NULL
+            END AS github_repo
          FROM projects p
          INNER JOIN workspace_members wm ON wm.workspace_id = p.workspace_id
          INNER JOIN workspaces w ON w.id = p.workspace_id
+         LEFT JOIN project_github_repositories pgr ON pgr.project_id = p.id
          WHERE wm.user_id = $1 AND ($2::UUID IS NULL OR p.workspace_id = $2)
          ORDER BY p.created_at DESC`,
         [userId, workspaceId || null]
@@ -87,10 +102,25 @@ export const findProjectByIdAndUser = async (
             p.due_date,
             p.created_at,
             p.updated_at,
-            w.name AS workspace_name
+            w.name AS workspace_name,
+            CASE 
+                WHEN pgr.id IS NOT NULL THEN json_build_object(
+                    'id', pgr.id,
+                    'project_id', pgr.project_id,
+                    'repo_id', pgr.repo_id,
+                    'repo_name', pgr.repo_name,
+                    'repo_owner', pgr.repo_owner,
+                    'repo_url', pgr.repo_url,
+                    'default_branch', pgr.default_branch,
+                    'created_at', pgr.created_at,
+                    'updated_at', pgr.updated_at
+                )
+                ELSE NULL
+            END AS github_repo
          FROM projects p
          INNER JOIN workspace_members wm ON wm.workspace_id = p.workspace_id
          INNER JOIN workspaces w ON w.id = p.workspace_id
+         LEFT JOIN project_github_repositories pgr ON pgr.project_id = p.id
          WHERE p.id = $1 AND wm.user_id = $2`,
         [projectId, userId]
     );
