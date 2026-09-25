@@ -1,5 +1,7 @@
 import pool from "../db";
+import { PoolClient } from "pg";
 import { Project, ProjectWithWorkspace } from "@/types/project.type";
+import { ProjectGitHubRepository } from "@/types/github.type";
 
 export interface CreateProjectInput {
     workspace_id: string;
@@ -186,4 +188,79 @@ export const countProjectsInWorkspace = async (workspaceId: string): Promise<num
         [workspaceId]
     );
     return result.rows[0]?.count ?? 0;
+};
+
+export interface CreateProjectWithGitHubInput extends CreateProjectInput {
+    github_repo?: {
+        repo_id: string;
+        repo_name: string;
+        repo_owner: string;
+        repo_url: string;
+        default_branch?: string;
+    };
+}
+
+/**
+ * Creates a project and optionally links a GitHub repository in a single
+ * database transaction. If the GitHub link INSERT fails the project INSERT
+ * is rolled back automatically.
+ */
+export const createProjectWithOptionalGitHubInTransaction = async (
+    data: CreateProjectWithGitHubInput
+): Promise<{ project: Project; github_repo: ProjectGitHubRepository | null }> => {
+    const client: PoolClient = await pool.connect();
+    try {
+        await client.query("BEGIN");
+
+        const projectResult = await client.query(
+            `INSERT INTO projects (
+                workspace_id,
+                created_by,
+                name,
+                description,
+                status,
+                start_date,
+                due_date
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id, workspace_id, created_by, name, description, status, start_date, due_date, created_at, updated_at`,
+            [
+                data.workspace_id,
+                data.created_by,
+                data.name,
+                data.description ?? null,
+                data.status || "PLANNING",
+                data.start_date ?? null,
+                data.due_date ?? null
+            ]
+        );
+
+        const project: Project = projectResult.rows[0];
+
+        let githubRepo: ProjectGitHubRepository | null = null;
+        if (data.github_repo) {
+            const repoResult = await client.query(
+                `INSERT INTO project_github_repositories (
+                    project_id, repo_id, repo_name, repo_owner, repo_url, default_branch, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+                RETURNING id, project_id, repo_id, repo_name, repo_owner, repo_url, default_branch, created_at, updated_at`,
+                [
+                    project.id,
+                    data.github_repo.repo_id,
+                    data.github_repo.repo_name,
+                    data.github_repo.repo_owner,
+                    data.github_repo.repo_url,
+                    data.github_repo.default_branch || "main"
+                ]
+            );
+            githubRepo = repoResult.rows[0];
+        }
+
+        await client.query("COMMIT");
+        return { project, github_repo: githubRepo };
+    } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+    } finally {
+        client.release();
+    }
 };

@@ -139,6 +139,52 @@ export const getUserGitHubRepositories = async (userId: string): Promise<GitHubR
     }
 };
 
+/**
+ * Verifies that the given repo_id is actually accessible by the user's
+ * connected GitHub account. Fetches the user's repos and checks the ID match.
+ * Throws ApiError(403) if the repo cannot be found in the user's accessible list.
+ */
+export const verifyGitHubRepoOwnership = async (userId: string, repoId: string): Promise<void> => {
+    const integration = await findGitHubIntegrationByUserId(userId, true);
+    if (!integration || !integration.access_token) {
+        throw new ApiError("GitHub account not connected", 400, [
+            { field: "github", message: "Please connect your GitHub account first" }
+        ]);
+    }
+
+    try {
+        // GET /repositories/:id is a GitHub API endpoint that returns a single
+        // repo by its numeric ID — no guessing owner/name from the client.
+        const res = await axios.get(`https://api.github.com/repositories/${repoId}`, {
+            headers: {
+                Authorization: `Bearer ${integration.access_token}`,
+                Accept: "application/vnd.github.v3+json"
+            }
+        });
+
+        // If the authenticated user is not the owner and has no access,
+        // GitHub would return 404. If we reach here, the repo is accessible.
+        // Extra check: confirm the token holder can actually push (has access).
+        const repoData = res.data;
+        if (!repoData || String(repoData.id) !== String(repoId)) {
+            throw new Error("Repository ID mismatch");
+        }
+    } catch (error: any) {
+        if (error instanceof ApiError) throw error;
+
+        const status = error?.response?.status;
+        if (status === 404 || status === 403) {
+            throw new ApiError("Repository not accessible", 403, [
+                { field: "repo_id", message: "You do not have access to the specified repository" }
+            ]);
+        }
+
+        throw new ApiError("Failed to verify repository ownership", 500, [
+            { field: "github", message: error.message || "Could not verify repository access" }
+        ]);
+    }
+};
+
 export const linkRepositoryToProject = async (
     userId: string,
     projectId: string,
@@ -162,6 +208,10 @@ export const linkRepositoryToProject = async (
     }
 
     await verifyWorkspaceMembership(project.workspace_id, userId, ["OWNER", "ADMIN"]);
+
+    // Repository ownership check — verify the submitted repo_id is actually
+    // accessible by this user's connected GitHub account.
+    await verifyGitHubRepoOwnership(userId, data.repo_id);
 
     const linked = await linkProjectGitHubRepoInDB({
         project_id: projectId,

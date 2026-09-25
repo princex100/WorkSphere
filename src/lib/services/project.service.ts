@@ -1,17 +1,17 @@
 import { ApiError } from "@/lib/errors/ApiError";
 import {
-    createProjectInDB,
     findProjectsByWorkspaceAndUser,
     findProjectByIdAndUser,
     updateProjectInDB,
     deleteProjectInDB,
-    countProjectsInWorkspace
+    countProjectsInWorkspace,
+    createProjectWithOptionalGitHubInTransaction
 } from "../repositories/project.repository";
 import { getCurrentWorkspace, verifyWorkspaceMembership } from "./workspace.service";
 import { Project, ProjectWithWorkspace } from "@/types/project.type";
 import { ProjectStatus, PERSONAL_WORKSPACE_PROJECT_LIMIT, ACTIVITY_ACTION, ENTITY_TYPE } from "@/constants";
 import { logActivity } from "./activity.service";
-import { linkRepositoryToProject } from "./github.service";
+import { verifyGitHubRepoOwnership } from "./github.service";
 
 export interface CreateProjectDTO {
     name: string;
@@ -78,6 +78,7 @@ export const createProject = async (
         ]);
     }
 
+    // Validate dates
     const startDate = data.start_date ? new Date(data.start_date) : null;
     const dueDate = data.due_date ? new Date(data.due_date) : null;
 
@@ -87,15 +88,33 @@ export const createProject = async (
         ]);
     }
 
-    const newProject = await createProjectInDB({
-        workspace_id: targetWorkspaceId,
-        created_by: userId,
-        name: data.name,
-        description: data.description,
-        status: data.status,
-        start_date: startDate,
-        due_date: dueDate
-    });
+    // If a GitHub repo is being linked, verify ownership BEFORE starting the
+    // transaction so we fail fast without touching the DB.
+    if (data.github_repo) {
+        await verifyGitHubRepoOwnership(userId, data.github_repo.repo_id);
+    }
+
+    // Use a single DB transaction: project + optional GitHub repo link.
+    // If GitHub linking fails, the project insert is rolled back.
+    const { project: newProject, github_repo: linkedGitHubRepo } =
+        await createProjectWithOptionalGitHubInTransaction({
+            workspace_id: targetWorkspaceId,
+            created_by: userId,
+            name: data.name,
+            description: data.description,
+            status: data.status,
+            start_date: startDate,
+            due_date: dueDate,
+            github_repo: data.github_repo
+                ? {
+                      repo_id: data.github_repo.repo_id,
+                      repo_name: data.github_repo.repo_name,
+                      repo_owner: data.github_repo.repo_owner,
+                      repo_url: data.github_repo.repo_url,
+                      default_branch: data.github_repo.default_branch
+                  }
+                : undefined
+        });
 
     if (!newProject) {
         throw new ApiError("Project creation failed", 500, [
@@ -103,7 +122,7 @@ export const createProject = async (
         ]);
     }
 
-    // Log Activity
+    // Log project creation activity
     await logActivity({
         workspace_id: targetWorkspaceId,
         actor_id: userId,
@@ -114,9 +133,21 @@ export const createProject = async (
         metadata: { name: newProject.name, status: newProject.status }
     });
 
-    let linkedGitHubRepo = null;
-    if (data.github_repo) {
-        linkedGitHubRepo = await linkRepositoryToProject(userId, newProject.id, data.github_repo);
+    // Log GitHub connection activity if a repo was linked
+    if (linkedGitHubRepo && data.github_repo) {
+        await logActivity({
+            workspace_id: targetWorkspaceId,
+            actor_id: userId,
+            project_id: newProject.id,
+            action: ACTIVITY_ACTION.GITHUB_REPO_CONNECTED,
+            entity_type: ENTITY_TYPE.GITHUB_REPO,
+            entity_id: linkedGitHubRepo.id,
+            metadata: {
+                repo_name: data.github_repo.repo_name,
+                repo_owner: data.github_repo.repo_owner,
+                repo_url: data.github_repo.repo_url
+            }
+        });
     }
 
     return {
@@ -268,5 +299,6 @@ export const deleteProject = async (
         metadata: { name: existingProject.name }
     });
 
+    
     return { id: projectId };
 };
