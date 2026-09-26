@@ -7,8 +7,10 @@ declare module "axios" {
     }
 }
 
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api";
+
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api",
+    baseURL: BASE_URL,
     withCredentials: true  // sends HttpOnly cookies (accessToken, refreshToken) automatically
 });
 
@@ -68,7 +70,12 @@ api.interceptors.response.use(
             return new Promise<void>((resolve, reject) => {
                 failedQueue.push({ resolve, reject });
             })
-                .then(() => api(originalRequest))        // cookies updated — just retry
+                .then(() => {
+                    // Mark as retried so a second 401 on this request
+                    // does not trigger another refresh cycle.
+                    originalRequest._retry = true;
+                    return api(originalRequest);
+                })
                 .catch((err) => Promise.reject(err));
         }
 
@@ -78,9 +85,8 @@ api.interceptors.response.use(
 
         try {
             // Use raw axios (not `api`) to avoid triggering this interceptor again.
-            // withCredentials sends the refreshToken cookie; the response Set-Cookie
-            // header automatically updates the accessToken & refreshToken cookies.
-            await axios.post("/api/auth/refresh", {}, { withCredentials: true });
+            // Build the URL from the same env var to stay consistent — no hardcoded path.
+            await axios.post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true });
 
             // Refresh succeeded — drain the queue (all retry, no header injection needed
             // because the browser has already updated the accessToken cookie).
