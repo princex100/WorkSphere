@@ -9,102 +9,100 @@ declare module "axios" {
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api",
-    withCredentials: true
+    withCredentials: true  // sends HttpOnly cookies (accessToken, refreshToken) automatically
 });
 
-// Mutex flag and queue for handling concurrent refresh requests
+// Mutex: prevents multiple concurrent refresh calls
 let isRefreshing = false;
+
+// Queue of { resolve, reject } callbacks for requests that arrived while a refresh was in flight
 let failedQueue: Array<{
-    resolve: (token: string | null) => void;
+    resolve: () => void;
     reject: (error: unknown) => void;
 }> = [];
 
-const processQueue = (error: unknown, token: string | null = null) => {
+/**
+ * Drains the queue after a refresh attempt.
+ * - error = null  → refresh succeeded, retry all queued requests
+ * - error ≠ null  → refresh failed, reject all queued requests
+ */
+const processQueue = (error: unknown) => {
     failedQueue.forEach((prom) => {
         if (error) {
             prom.reject(error);
         } else {
-            prom.resolve(token);
+            prom.resolve();
         }
     });
     failedQueue = [];
 };
 
-// Request interceptor
+// ─── Request interceptor ─────────────────────────────────────────────────────
+// Nothing to do: withCredentials=true makes the browser attach the accessToken
+// cookie automatically on every request.
 api.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
-        // withCredentials is true by default on the instance,
-        // so cookies (accessToken / refreshToken) are sent automatically by the browser.
-        return config;
-    },
+    (config: InternalAxiosRequestConfig) => config,
     (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// ─── Response interceptor ────────────────────────────────────────────────────
 api.interceptors.response.use(
     (response) => response,
+
     async (error: AxiosError<{ errors?: Array<{ field: string; message: string }> }>) => {
         const originalRequest = error.config;
 
+        // Only intercept 401 TOKEN_EXPIRED, and only once per request.
         const isTokenExpired =
             error.response?.status === 401 &&
-            error.response?.data?.errors?.some((err) => err.message === "TOKEN_EXPIRED");
+            error.response?.data?.errors?.some((e) => e.message === "TOKEN_EXPIRED");
 
-        if (isTokenExpired && originalRequest && !originalRequest._retry) {
-            // If already refreshing, enqueue this request to wait for the ongoing refresh operation
-            if (isRefreshing) {
-                return new Promise<string | null>((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
-                })
-                    .then((token) => {
-                        if (token && originalRequest.headers) {
-                            originalRequest.headers["Authorization"] = `Bearer ${token}`;
-                        }
-                        return api(originalRequest);
-                    })
-                    .catch((err) => Promise.reject(err));
-            }
-
-            // Mark request as retried to prevent infinite loops
-            originalRequest._retry = true;
-            isRefreshing = true;
-
-            try {
-                // Call refresh endpoint with raw axios instance to prevent recursive interceptor triggers
-                const refreshResponse = await axios.post(
-                    "/api/auth/refresh",
-                    {},
-                    { withCredentials: true }
-                );
-
-                const newAccessToken: string | null =
-                    refreshResponse.data?.data?.accessToken || null;
-
-                // Process and resolve all pending queued requests with new token
-                processQueue(null, newAccessToken);
-
-                if (newAccessToken && originalRequest.headers) {
-                    originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-                }
-
-                return api(originalRequest);
-            } catch (refreshError) {
-                // Refresh failed: reject all queued requests
-                processQueue(refreshError, null);
-
-                // Handle unauthenticated user state
-                if (typeof window !== "undefined") {
-                    // Let the application know or handle unauthenticated state if needed
-                    console.warn("Session expired. Please log in again.");
-                }
-
-                return Promise.reject(refreshError);
-            } finally {
-                isRefreshing = false;
-            }
+        if (!isTokenExpired || !originalRequest || originalRequest._retry) {
+            return Promise.reject(error);
         }
 
-        return Promise.reject(error);
+        // ── Concurrent refresh guard ─────────────────────────────────────────
+        // If another request already triggered a refresh, queue this one to
+        // retry automatically once the refresh resolves.
+        if (isRefreshing) {
+            return new Promise<void>((resolve, reject) => {
+                failedQueue.push({ resolve, reject });
+            })
+                .then(() => api(originalRequest))        // cookies updated — just retry
+                .catch((err) => Promise.reject(err));
+        }
+
+        // ── This request is the first to hit TOKEN_EXPIRED ───────────────────
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+            // Use raw axios (not `api`) to avoid triggering this interceptor again.
+            // withCredentials sends the refreshToken cookie; the response Set-Cookie
+            // header automatically updates the accessToken & refreshToken cookies.
+            await axios.post("/api/auth/refresh", {}, { withCredentials: true });
+
+            // Refresh succeeded — drain the queue (all retry, no header injection needed
+            // because the browser has already updated the accessToken cookie).
+            processQueue(null);
+
+            // Retry the original request. The browser will attach the new accessToken cookie.
+            return api(originalRequest);
+
+        } catch (refreshError) {
+            // Refresh failed (refresh token expired / revoked / invalid).
+            // Reject all queued requests and force the user to log in again.
+            processQueue(refreshError);
+
+            if (typeof window !== "undefined") {
+                window.location.href = "/login";
+            }
+
+            return Promise.reject(refreshError);
+
+        } finally {
+            isRefreshing = false;
+        }
     }
 );
 
