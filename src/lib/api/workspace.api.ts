@@ -27,6 +27,11 @@ export interface DashboardData {
     vault: VaultSummary;
 }
 
+export async function getUserWorkspaces(): Promise<Workspace[]> {
+    const res = await api.get<ApiResponse<Workspace[]>>("/workspaces");
+    return res.data.data;
+}
+
 export async function getCurrentWorkspace(): Promise<Workspace> {
     const res = await api.get<ApiResponse<Workspace>>("/workspaces/current");
     return res.data.data;
@@ -41,3 +46,4 @@ export async function getWorkspaceActivities(limit = 20): Promise<ActivityLog[]>
     const res = await api.get<ApiResponse<ActivityLog[]>>(`/workspaces/current/activities?limit=${limit}`);
     return res.data.data;
 }
+
