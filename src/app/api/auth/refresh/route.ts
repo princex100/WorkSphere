@@ -21,22 +21,30 @@ export const POST = asynchandler(async (request: NextRequest) => {
 
     const result = await refreshAccessToken(refreshToken);
 
-    const accessTokenCookieOptions = {
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict" as const,
-        maxAge: 5 * 60
-    };
-
     const response = NextResponse.json(
         new ApiResponse(
             200,
-            { accessToken: result.accessToken },
+            // Never expose tokens in the body — only set them as HttpOnly cookies.
+            { success: true },
             "Access token refreshed successfully"
         )
     );
 
-    response.cookies.set("accessToken", result.accessToken, accessTokenCookieOptions);
+    // New access token — short-lived.
+    response.cookies.set("accessToken", result.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 5 * 60  // 5 minutes
+    });
+
+    // Rotated refresh token — replaces the old one (single-use rotation).
+    response.cookies.set("refreshToken", result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60  // 7 days
+    });
 
     return response;
 });

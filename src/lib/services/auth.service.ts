@@ -517,6 +517,7 @@ export const refreshAccessToken = async (refreshToken: string) => {
         ]);
     }
 
+    // Verify token exists in DB (not revoked).
     const existingTokenInDB = await findRefreshTokenInDB(refreshToken);
     if (!existingTokenInDB) {
         throw new ApiError("Unauthorized", 401, [
@@ -531,10 +532,26 @@ export const refreshAccessToken = async (refreshToken: string) => {
         ]);
     }
 
-    const accessToken = generateAccessToken(user.id, user);
+    // --- ROTATION ---
+    // Delete the old refresh token first (single-use guarantee).
+    // If saving the new one fails below, the old one is already gone which
+    // forces re-login — the safe failure mode.
+    await deletJWTfromDB(user.id);
+
+    // Generate a brand-new access token + refresh token pair.
+    const { accessToken, refreshToken: newRefreshToken } = await generateJwtTokens(user.id);
+
+    // Persist the new refresh token.
+    const saved = await saveRefreshTokenInDB(newRefreshToken, user.id);
+    if (!saved) {
+        throw new ApiError("Failed to rotate refresh token", 500, [
+            { field: "token", message: "Could not save new refresh token" }
+        ]);
+    }
 
     return {
         accessToken,
+        refreshToken: newRefreshToken,
         user
     };
 };
