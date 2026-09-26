@@ -1,184 +1,152 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════
-   WorkSphere Design System
-   Dark-first, Linear-inspired, premium productivity UI
+   WorkSphere Design System — Light Theme
+   Clean · Minimal · Professional · Brilliance-inspired
    ═══════════════════════════════════════════════════════════════ */
 
 @theme inline {
     /* ── Fonts ── */
-    --font-sans: var(--font-geist-sans), "Inter", system-ui, sans-serif;
-    --font-mono: var(--font-geist-mono), "JetBrains Mono", monospace;
+    --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
-    /* ── Brand Colors ── */
-    --color-brand-50:  #f0f4ff;
-    --color-brand-100: #e0e9ff;
-    --color-brand-200: #c7d7fe;
-    --color-brand-300: #a5b8fb;
-    --color-brand-400: #818cf8;
-    --color-brand-500: #6366f1;
-    --color-brand-600: #4f46e5;
-    --color-brand-700: #4338ca;
-    --color-brand-800: #3730a3;
-    --color-brand-900: #312e81;
+    /* ── Core backgrounds ── */
+    --color-ws-bg:           #f9f9f8;
+    --color-ws-bg-alt:       #f3f3f1;
+    --color-ws-surface:      #ffffff;
+    --color-ws-surface-alt:  #fafafa;
+    --color-ws-overlay:      rgba(0, 0, 0, 0.4);
 
-    /* ── Surface / Background ── */
-    --color-surface-0:   #0a0a0f;
-    --color-surface-50:  #0f0f17;
-    --color-surface-100: #13131e;
-    --color-surface-200: #1a1a2e;
-    --color-surface-300: #22223a;
-    --color-surface-400: #2d2d4a;
-    --color-surface-500: #3a3a5c;
-
-    /* ── Border ── */
-    --color-border:        rgba(255,255,255,0.06);
-    --color-border-subtle: rgba(255,255,255,0.04);
-    --color-border-strong: rgba(255,255,255,0.12);
+    /* ── Borders ── */
+    --color-ws-border:        rgba(0, 0, 0, 0.08);
+    --color-ws-border-subtle: rgba(0, 0, 0, 0.05);
+    --color-ws-border-strong: rgba(0, 0, 0, 0.14);
 
     /* ── Text ── */
-    --color-text-primary:   #f1f1f3;
-    --color-text-secondary: #9393a8;
-    --color-text-tertiary:  #5f5f75;
-    --color-text-disabled:  #3d3d50;
+    --color-ws-text:           #0a0a0a;
+    --color-ws-text-2:         #3d3d3d;
+    --color-ws-text-3:         #6b6b6b;
+    --color-ws-text-4:         #a0a0a0;
+    --color-ws-text-disabled:  #c4c4c4;
 
-    /* ── Status colors ── */
-    --color-success:  #22c55e;
-    --color-warning:  #f59e0b;
-    --color-error:    #ef4444;
-    --color-info:     #6366f1;
+    /* ── Brand accent (indigo, used sparingly) ── */
+    --color-ws-accent:       #4f46e5;
+    --color-ws-accent-light: #eef2ff;
+    --color-ws-accent-hover: #4338ca;
 
-    /* ── Task / Project status ── */
-    --color-status-todo:        #5f5f75;
-    --color-status-in-progress: #6366f1;
-    --color-status-review:      #f59e0b;
-    --color-status-completed:   #22c55e;
-    --color-status-cancelled:   #ef4444;
-    --color-status-planning:    #8b5cf6;
-    --color-status-active:      #6366f1;
-    --color-status-paused:      #f59e0b;
+    /* ── Status ── */
+    --color-ws-success:  #16a34a;
+    --color-ws-warning:  #d97706;
+    --color-ws-error:    #dc2626;
+    --color-ws-info:     #2563eb;
+
+    /* ── Project status ── */
+    --color-planning:    #7c3aed;
+    --color-active:      #4f46e5;
+    --color-in-progress: #2563eb;
+    --color-paused:      #d97706;
+    --color-completed:   #16a34a;
+    --color-cancelled:   #dc2626;
 
     /* ── Priority ── */
-    --color-priority-low:    #22c55e;
-    --color-priority-medium: #f59e0b;
-    --color-priority-high:   #ef4444;
+    --color-low:    #16a34a;
+    --color-medium: #d97706;
+    --color-high:   #dc2626;
 
     /* ── Radii ── */
-    --radius-sm:  4px;
-    --radius-md:  8px;
-    --radius-lg:  12px;
-    --radius-xl:  16px;
-    --radius-2xl: 24px;
+    --radius-xs:   4px;
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   14px;
+    --radius-xl:   20px;
     --radius-full: 9999px;
 
     /* ── Shadows ── */
-    --shadow-sm:  0 1px 2px rgba(0,0,0,0.4);
-    --shadow-md:  0 4px 12px rgba(0,0,0,0.5);
-    --shadow-lg:  0 8px 32px rgba(0,0,0,0.6);
-    --shadow-glow: 0 0 24px rgba(99,102,241,0.15);
-
-    /* ── Transitions ── */
-    --transition-fast:   150ms cubic-bezier(0.4,0,0.2,1);
-    --transition-normal: 250ms cubic-bezier(0.4,0,0.2,1);
-    --transition-slow:   400ms cubic-bezier(0.4,0,0.2,1);
+    --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
+    --shadow-sm:  0 1px 4px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg:  0 12px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
+    --shadow-xl:  0 24px 48px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.06);
 }
 
-/* ── Base ── */
+/* ── Base Reset ── */
 *, *::before, *::after {
     box-sizing: border-box;
+    margin: 0;
 }
 
 html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 body {
-    background-color: var(--color-surface-0);
-    color: var(--color-text-primary);
+    background-color: var(--color-ws-bg);
+    color: var(--color-ws-text);
     font-family: var(--font-sans);
-    line-height: 1.5;
-    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
 }
 
 /* ── Custom Scrollbar ── */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: var(--color-surface-400);
-    border-radius: var(--radius-full);
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--color-surface-500);
-}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.22); }
 
 /* ── Selection ── */
 ::selection {
-    background: rgba(99,102,241,0.3);
-    color: var(--color-text-primary);
+    background: rgba(79, 70, 229, 0.15);
+    color: var(--color-ws-text);
 }
 
 /* ── Focus ring ── */
 :focus-visible {
-    outline: 2px solid var(--color-brand-500);
+    outline: 2px solid var(--color-ws-accent);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
 }
 
-/* ── Utility: Glass morphism card ── */
-.glass {
-    background: rgba(255,255,255,0.03);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--color-border);
+/* ── Dividers ── */
+hr {
+    border: none;
+    border-top: 1px solid var(--color-ws-border);
 }
 
-/* ── Utility: Brand gradient text ── */
-.gradient-text {
-    background: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #a78bfa 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* ── Utility: Shimmer skeleton animation ── */
+/* ── Shimmer skeleton ── */
 @keyframes shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
 }
 
 .skeleton {
     background: linear-gradient(
         90deg,
-        var(--color-surface-200) 25%,
-        var(--color-surface-300) 50%,
-        var(--color-surface-200) 75%
+        #f0f0ee 0%,
+        #e8e8e5 40%,
+        #f0f0ee 80%
     );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: var(--radius-md);
+    background-size: 800px 100%;
+    animation: shimmer 1.6s infinite linear;
+    border-radius: var(--radius-sm);
 }
 
-/* ── Utility: Fade in ── */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
+/* ── Fade in ── */
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-
-.fade-in {
-    animation: fadeIn var(--transition-normal) forwards;
+.animate-fade-up {
+    animation: fade-up 0.3s ease forwards;
 }
 
-/* ── Utility: Pulse dot (online/active indicator) ── */
-@keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.4; }
+/* ── Spin ── */
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
-.pulse-dot {
-    animation: pulse-dot 2s ease-in-out infinite;
+.animate-spin {
+    animation: spin 0.8s linear infinite;
 }

@@ -1,33 +1,28 @@
 import { ReactNode } from "react";
+import Link from "next/link";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-surface-0 px-4">
-            {/* Background gradient orbs */}
-            <div className="pointer-events-none fixed inset-0 overflow-hidden">
-                <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-brand-500/5 blur-3xl" />
-                <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-purple-500/5 blur-3xl" />
-            </div>
-
-            <div className="relative w-full max-w-md">
-                {/* Logo */}
-                <div className="mb-8 flex flex-col items-center">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="flex size-8 items-center justify-center rounded-lg bg-brand-500">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" fill="white" fillOpacity="0.9" />
-                                <path d="M8 5L11 6.75V10.25L8 12L5 10.25V6.75L8 5Z" fill="white" fillOpacity="0.4" />
-                            </svg>
-                        </div>
-                        <span className="text-lg font-semibold text-text-primary tracking-tight">WorkSphere</span>
+        <div className="min-h-screen flex flex-col bg-ws-bg">
+            {/* Minimal nav */}
+            <header className="flex items-center justify-between px-6 py-4 border-b border-ws-border-subtle">
+                <Link href="/" className="flex items-center gap-2 group">
+                    <div className="flex size-7 items-center justify-center rounded-lg bg-[#0a0a0a]">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M7 0.5L13 3.75V10.25L7 13.5L1 10.25V3.75L7 0.5Z" fill="white" fillOpacity="0.9"/>
+                            <path d="M7 4L10 5.75V9.25L7 11L4 9.25V5.75L7 4Z" fill="white" fillOpacity="0.35"/>
+                        </svg>
                     </div>
-                </div>
+                    <span className="text-[15px] font-semibold text-ws-text tracking-tight">WorkSphere</span>
+                </Link>
+            </header>
 
-                {/* Card */}
-                <div className="glass rounded-2xl p-8 shadow-lg border border-border">
+            {/* Auth content — centered */}
+            <main className="flex flex-1 items-center justify-center px-4 py-12">
+                <div className="w-full max-w-[400px] animate-fade-up">
                     {children}
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

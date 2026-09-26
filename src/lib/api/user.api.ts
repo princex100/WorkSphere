@@ -18,3 +18,4 @@ export async function uploadAvatar(file: File): Promise<User> {
     const res = await api.post<ApiResponse<User>>("/users/avatar", formData);
     return res.data.data;
 }
+

@@ -55,7 +55,7 @@ export async function googleOauth(token: string): Promise<AuthResult> {
 }
 
 export async function verifyEmail(token: string): Promise<{ message: string }> {
-    const res = await api.post<ApiResponse<{ message: string }>>("/auth/verify-email", { token });
+    const res = await api.get<ApiResponse<{ message: string }>>("/auth/verify-email", { params: { token } });
     return res.data.data;
 }
 
@@ -64,7 +64,11 @@ export async function forgotPassword(email: string): Promise<{ message: string }
     return res.data.data;
 }
 
-export async function resetPassword(token: string, password: string): Promise<{ message: string }> {
-    const res = await api.post<ApiResponse<{ message: string }>>("/auth/reset-password", { token, password });
+export async function resetPassword(token: string, password: string, confirmPassword?: string): Promise<{ message: string }> {
+    const res = await api.post<ApiResponse<{ message: string }>>(
+        `/auth/reset-password?token=${encodeURIComponent(token)}`,
+        { password, confirmPassword: confirmPassword || password }
+    );
     return res.data.data;
 }
+
