@@ -10,7 +10,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
     "@react-oauth/google": "^0.13.5",
+    "@tanstack/react-query": "^5.104.0",
     "axios": "^1.20.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.11.0",
@@ -21,12 +23,14 @@
     "ioredis": "^6.0.0",
     "jose": "^6.2.12",
     "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.48.0",
     "mailgen": "^2.0.36",
     "next": "16.3.1",
     "nodemailer": "^9.0.5",
     "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "react-hook-form": "^7.89.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {

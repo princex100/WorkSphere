@@ -1,28 +1,184 @@
 @import "tailwindcss";
 
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ═══════════════════════════════════════════════════════════════
+   WorkSphere Design System
+   Dark-first, Linear-inspired, premium productivity UI
+   ═══════════════════════════════════════════════════════════════ */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+    /* ── Fonts ── */
+    --font-sans: var(--font-geist-sans), "Inter", system-ui, sans-serif;
+    --font-mono: var(--font-geist-mono), "JetBrains Mono", monospace;
+
+    /* ── Brand Colors ── */
+    --color-brand-50:  #f0f4ff;
+    --color-brand-100: #e0e9ff;
+    --color-brand-200: #c7d7fe;
+    --color-brand-300: #a5b8fb;
+    --color-brand-400: #818cf8;
+    --color-brand-500: #6366f1;
+    --color-brand-600: #4f46e5;
+    --color-brand-700: #4338ca;
+    --color-brand-800: #3730a3;
+    --color-brand-900: #312e81;
+
+    /* ── Surface / Background ── */
+    --color-surface-0:   #0a0a0f;
+    --color-surface-50:  #0f0f17;
+    --color-surface-100: #13131e;
+    --color-surface-200: #1a1a2e;
+    --color-surface-300: #22223a;
+    --color-surface-400: #2d2d4a;
+    --color-surface-500: #3a3a5c;
+
+    /* ── Border ── */
+    --color-border:        rgba(255,255,255,0.06);
+    --color-border-subtle: rgba(255,255,255,0.04);
+    --color-border-strong: rgba(255,255,255,0.12);
+
+    /* ── Text ── */
+    --color-text-primary:   #f1f1f3;
+    --color-text-secondary: #9393a8;
+    --color-text-tertiary:  #5f5f75;
+    --color-text-disabled:  #3d3d50;
+
+    /* ── Status colors ── */
+    --color-success:  #22c55e;
+    --color-warning:  #f59e0b;
+    --color-error:    #ef4444;
+    --color-info:     #6366f1;
+
+    /* ── Task / Project status ── */
+    --color-status-todo:        #5f5f75;
+    --color-status-in-progress: #6366f1;
+    --color-status-review:      #f59e0b;
+    --color-status-completed:   #22c55e;
+    --color-status-cancelled:   #ef4444;
+    --color-status-planning:    #8b5cf6;
+    --color-status-active:      #6366f1;
+    --color-status-paused:      #f59e0b;
+
+    /* ── Priority ── */
+    --color-priority-low:    #22c55e;
+    --color-priority-medium: #f59e0b;
+    --color-priority-high:   #ef4444;
+
+    /* ── Radii ── */
+    --radius-sm:  4px;
+    --radius-md:  8px;
+    --radius-lg:  12px;
+    --radius-xl:  16px;
+    --radius-2xl: 24px;
+    --radius-full: 9999px;
+
+    /* ── Shadows ── */
+    --shadow-sm:  0 1px 2px rgba(0,0,0,0.4);
+    --shadow-md:  0 4px 12px rgba(0,0,0,0.5);
+    --shadow-lg:  0 8px 32px rgba(0,0,0,0.6);
+    --shadow-glow: 0 0 24px rgba(99,102,241,0.15);
+
+    /* ── Transitions ── */
+    --transition-fast:   150ms cubic-bezier(0.4,0,0.2,1);
+    --transition-normal: 250ms cubic-bezier(0.4,0,0.2,1);
+    --transition-slow:   400ms cubic-bezier(0.4,0,0.2,1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base ── */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    background-color: var(--color-surface-0);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--color-surface-400);
+    border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-surface-500);
+}
+
+/* ── Selection ── */
+::selection {
+    background: rgba(99,102,241,0.3);
+    color: var(--color-text-primary);
+}
+
+/* ── Focus ring ── */
+:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+/* ── Utility: Glass morphism card ── */
+.glass {
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--color-border);
+}
+
+/* ── Utility: Brand gradient text ── */
+.gradient-text {
+    background: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ── Utility: Shimmer skeleton animation ── */
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--color-surface-200) 25%,
+        var(--color-surface-300) 50%,
+        var(--color-surface-200) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-md);
+}
+
+/* ── Utility: Fade in ── */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn var(--transition-normal) forwards;
+}
+
+/* ── Utility: Pulse dot (online/active indicator) ── */
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+.pulse-dot {
+    animation: pulse-dot 2s ease-in-out infinite;
 }
